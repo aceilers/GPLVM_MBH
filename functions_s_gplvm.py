@@ -150,12 +150,12 @@ def cygnet_likelihood_d_worker_new(task):
         gradLx = np.zeros_like(Z)
         gradLx[good_stars, :] = dLdZ(X[good_stars], Z[good_stars, :], thisfactor, thiskernel, Bx) 
         dLdrbf = dLdhyper(X[good_stars], Z[good_stars, :], Ax, thiskernel, thisfactor) 
-        dLdband = dLdhyper_band(X[good_stars], Z[good_stars, :], thiskernel, thisfactor) 
+        #dLdband = dLdhyper_band(X[good_stars], Z[good_stars, :], thiskernel, thisfactor) 
     else:
         Lx = 0
         gradLx = np.zeros_like(Z)
         dLdrbf, dLdband = 0, 0
-    return Lx, gradLx, dLdrbf, dLdband
+    return Lx, gradLx, dLdrbf#, dLdband
 
 def cygnet_likelihood_l_worker_new(task):
     Y, Y_var, Z, By, Ay = task
@@ -185,11 +185,15 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, beta = 0, X_mask = None, Y_mask = N
     L = Y.shape[1]
         
     Z = np.reshape(pars[:(N*Q)], (N, Q)) 
-    # pars = Z, Ax, Bx, Ay, By 
-    Ax = pars[-2*L-2]
-    Bx = pars[-2*L-1]
-    Ay = pars[-2*L:-L]
-    By = pars[-L:]
+    Bx = 1.
+    By = np.ones(L)
+    
+    Ax = pars[-L-1]
+    Ay = pars[-L:]
+    #Ax = pars[-2*L-2]
+    #Bx = pars[-2*L-1]
+    #Ay = pars[-2*L:-L]
+    #By = pars[-L:]
     #print(Ax, Bx, Ay, By)
     
     # fixed for all d
@@ -202,34 +206,32 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, beta = 0, X_mask = None, Y_mask = N
     
     Lx, Ly = 0., 0.
     gradLx, gradLy = np.zeros_like(Z), np.zeros_like(Z)
-    gradLx_rbf, gradLx_band = 0, 0 #np.zeros_like(Ax), np.zeros_like(Bx)
-    gradLy_rbf, gradLy_band = np.zeros_like(Ay), np.zeros_like(By)
-    
-    
+    # gradLx_rbf, gradLx_band = 0, 0 #np.zeros_like(Ax), np.zeros_like(Bx)
+    # gradLy_rbf, gradLy_band = np.zeros_like(Ay), np.zeros_like(By)
+    gradLx_rbf = 0 
+    gradLy_rbf = np.zeros_like(Ay)
+        
     tasks = [(X[:, d], X_var[:, d], Z, kernel1, Bx, Ax, beta) for d in range(D)]        
     for i, result in enumerate(map(cygnet_likelihood_d_worker_new, tasks)):
         Lx += result[0]
         gradLx += result[1]
-        # if i == 0:
         gradLx_rbf += result[2]
-        gradLx_band += result[3]
-        # else:
-        #     gradLx_rbf[1] += result[2]
-        #     gradLx_band[1] += result[3]
+        #gradLx_band += result[3]
         
     tasks = [(Y[:, l], Y_var[:, l], Z, By[l], Ay[l]) for l in range(L)]    
     for i, result in enumerate(map(cygnet_likelihood_l_worker_new, tasks)):
         Ly += result[0]
         gradLy += result[1]   
         gradLy_rbf[i] += result[2]
-        gradLy_band[i] += result[3]
+        #gradLy_band[i] += result[3]
         
     Lz = -0.5 * np.sum(Z[:, 1:]**2) # - 0.5 * np.sum((Z[:, 0] - Y[:, 0])**2 / Y_var[:, 0])
     dlnpdZ = -Z 
     L = Lx + Ly + Lz   
     gradLZ = gradLx + gradLy + dlnpdZ      
     gradLZ = np.reshape(gradLZ, (N * Q, ))   # reshape gradL back into 1D array  
-    gradL = np.hstack((gradLZ, gradLx_rbf, gradLx_band, gradLy_rbf, gradLy_band))
+    gradL = np.hstack((gradLZ, gradLx_rbf, gradLy_rbf))
+    #gradL = np.hstack((gradLZ, gradLx_rbf, gradLx_band, gradLy_rbf, gradLy_band))
     assert gradL.shape == pars.shape
     #print(-2.*Lx, -2.*Ly, -2.*Lz, -2.*L)
     
@@ -389,7 +391,8 @@ def predictY(X_new, X_var_new, X, X_var, Y, Y_var, Z_final, hyper_params, y0, z0
     
     # Q = Z_final.shape[1]
     
-    Ax, Bx, Ay, By = hyper_params
+    Ax, Ay = hyper_params
+    Bx = 1
     
     # get new set of latent parameters for the new object given the new spectrum!        
     res = op.minimize(lnL_znew, x0 = z0, args = (X_new, X_var_new, Z_final, X, X_var, Ax, Bx, X_mask, X_mask_new), method = 'L-BFGS-B', jac = True, 
@@ -413,7 +416,9 @@ def predictY(X_new, X_var_new, X, X_var, Y, Y_var, Z_final, hyper_params, y0, z0
 def predictX(Y_new, Y, Y_var, Z_final, hyper_params, z0, name):
     
     Q = Z_final.shape[1]    
-    Ax, Bx, Ay, By = hyper_params
+    #Ax, Bx, Ay, By = hyper_params
+    Ax, Ay = hyper_params
+    By = np.ones_like(Ay)
     
     # sampling the latent space to see whether Z is multimodal (this is basically a repetition of the previous step, just trying to get the best set of new latents)
     print('sampling latent space via MCMC...')

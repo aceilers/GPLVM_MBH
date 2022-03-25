@@ -35,10 +35,10 @@ from functions_s_gplvm import PCAInitial, mean_var, Chi2_Matrix, NN, predictY, l
 # import loop parameters
 # -------------------------------------------------------------------------------
 
-# Q_start = int(sys.argv[-2])
-# Q_end = int(sys.argv[-1])
-# print(Q_start, Q_end)
-Q_start, Q_end = 0, 1
+Q_start = int(sys.argv[-2])
+Q_end = int(sys.argv[-1])
+print(Q_start, Q_end)
+# Q_start, Q_end = 0, 1
 
 # -------------------------------------------------------------------------------
 # parameters
@@ -60,8 +60,8 @@ plot_limits['$\log_{10}\,L_{\\rm bol}$'] = (40, 50)
 
 # first entries: black hole masses, z, SNR, BAL, survey, normalization mean, Lbol
 # remaining entries: spectra
-f = open('../RM_black_hole_masses/data_HST_SDSS_1220_5000_2A.pickle', 'rb') 
-#f = open('data_HST_SDSS_1220_5000_2A.pickle', 'rb') 
+#f = open('../RM_black_hole_masses/data_HST_SDSS_1220_5000_2A.pickle', 'rb') 
+f = open('data_HST_SDSS_1220_5000_2A.pickle', 'rb') 
 #f = open('data_HST_SDSS_flexwave2_1220_5000.pickle', 'rb')
 data, data_ivar = pickle.load(f)
 f.close()
@@ -93,15 +93,16 @@ f.close()
 
 cross = True
 
-name1 = 'ps_s{}_HST_SDSS_1220_5000_2A_noSNRcut'.format(seed) 
+name1 = 'ps_s{}_HST_SDSS_1220_5000_2A_band1fixed_noSNRcut'.format(seed) 
 
 # -------------------------------------------------------------------------------
 # initialize parameters
 # -------------------------------------------------------------------------------
 
 if cross:
-    all_Y_new = np.zeros((data.shape[0], 1))
-    all_Y_new_var = np.zeros((data.shape[0], 1))
+    L = 3
+    all_Y_new = np.zeros((data.shape[0], L))
+    all_Y_new_var = np.zeros((data.shape[0], L))
     name1 += '_cross'
 
 for qq in range(Q_start, Q_end): 
@@ -142,8 +143,10 @@ for qq in range(Q_start, Q_end):
     X_var = 1 / data_ivar_scaled[:, 7:]
     inds_label = np.zeros(data_scaled.shape[1], dtype = bool)
     inds_label[0] = True # black hole mass
-    inds_label[6] = True # Lbol
-    #inds_label[1] = True # redshift
+    if L >= 2:
+        inds_label[6] = True # Lbol
+    if L >= 3:
+        inds_label[1] = True # redshift
     Y = data_scaled[:, inds_label] 
     Y_var = (1 / data_ivar_scaled[:, inds_label])
     
@@ -183,8 +186,7 @@ for qq in range(Q_start, Q_end):
     Bx = np.ones(1) # theta_band
     By = np.ones(L) #L # gamma_band
         
-    #hyper_params = np.hstack([Bx, By, Ax, Ay]) 
-    hyper_params = np.hstack([Ax, Bx, Ay, By]) 
+    hyper_params = np.hstack([Ax, Ay]) 
     
     # -------------------------------------------------------------------------------
     # initialize parameters
@@ -226,12 +228,14 @@ for qq in range(Q_start, Q_end):
     
     Z_final = np.reshape(pars_opt[:(N*Q)], (N, Q))
     
-    Ax = pars_opt[-2*L-2]
-    Bx = pars_opt[-2*L-1]
-    Ay = pars_opt[-2*L:-L]
-    By = pars_opt[-L:]
+    # Ax = pars_opt[-2*L-2]
+    # Bx = pars_opt[-2*L-1]
+    # Ay = pars_opt[-2*L:-L]
+    # By = pars_opt[-L:]
+    Ax = pars_opt[-L-1]
+    Ay = pars_opt[-L:]
     
-    hyper_params = np.array([Ax, Bx, Ay, By])
+    hyper_params = np.array([Ax, Ay])
     
     print('new hyper parameters: ', Ax, Bx, Ay, By)
     #print('new latent parameters: ', Z_final)
@@ -301,7 +305,7 @@ for qq in range(Q_start, Q_end):
             Y_new_n, Y_new_var_n, k_Z_zj, factor = mean_var(Z_final, Z_opt_n, Y_input[good_stars, l], Y_var_input[good_stars, l], Ay[l], By[l])                
             Y_new_test[n, l] = Y_new_n * scales[inds_label][l] + pivots[inds_label][l]
             Y_new_var_test[n, l] = Y_new_var_n * scales[inds_label][l]**2
-            print('new Y!!! Y = ', Y_new_test[n, l], 'pm ', np.sqrt(Y_new_var_test[n, l]), '-- original: ', data[ind_test][n][l])
+            print('new Y!!! Y = ', Y_new_test[n, l], 'pm ', np.sqrt(Y_new_var_test[n, l]), '-- original: ', data[ind_test][n][inds_label][l])
         
         Z_new_test[n, :] = Z_opt_n
             
@@ -314,8 +318,8 @@ for qq in range(Q_start, Q_end):
         all_Y_new_var[qq, :] = Y_new_var_test
         print(all_Y_new[qq], data[qq, inds_label])   
     
-    f = open('../RM_black_hole_masses/files/f_{}.pickle'.format(name), 'wb')
-    # f = open('files/f_{}.pickle'.format(name), 'wb')
+    # f = open('../RM_black_hole_masses/files/f_{}.pickle'.format(name), 'wb')
+    f = open('files/f_{}.pickle'.format(name), 'wb')
     pickle.dump((all_Y_new, all_Y_new_var, sort_r, Z_final, Z_opt_n, hyper_params, res.success, success_z), f)
     f.close()
 
