@@ -77,14 +77,14 @@ def NN(index, chi2, labels):
 # -------------------------------------------------------------------------------
 
 # radius basis function
-def kernelRBF(Z, rbf, band): 
-    B = B_matrix(Z)
-    kernel = rbf * np.exp(band * B) 
+def kernelRBF(Z, A, B): 
+    Bs = B_matrix(Z)
+    kernel = A * np.exp(B * Bs) 
     return kernel
 
-def kernelRBF_norbf(Z, band): 
-    B = B_matrix(Z)
-    kernel = np.exp(band * B) 
+def kernelRBF_norbf(Z, B): 
+    Bs = B_matrix(Z)
+    kernel = np.exp(B * Bs) 
     return kernel
 
 def B_matrix(Z):
@@ -130,26 +130,26 @@ def dLdhyper(data, Z, rbf, K, factor):
 # -------------------------------------------------------------------------------
 
 def cygnet_likelihood_d_worker_new(task):
-    X, X_var, Z, kernel1_norbf0, kernel1_norbf, theta_band, theta_rbf, d = task
-    if d == 0: 
-        theta_rbf = theta_rbf[0]
-        theta_band = theta_band[0]
-        kk = kernel1_norbf0
-    elif d > 0: 
-        theta_rbf = theta_rbf[1] 
-        theta_band = theta_band[1]
-        kk = kernel1_norbf
-    kernel1 = theta_rbf * kk 
+    X, X_var, Z, kernel1, Bx, Ax, beta = task
+    # if d == 0: 
+    #     theta_rbf = theta_rbf[0]
+    #     theta_band = theta_band[0]
+    #     kk = kernel1_norbf0
+    # elif d > 0: 
+    #     theta_rbf = theta_rbf[1] 
+    #     theta_band = theta_band[1]
+    #     kk = kernel1_norbf
+    # kernel1 = theta_rbf * kk 
     good_stars = np.isfinite(X) * np.isfinite(X_var)
     if np.sum(good_stars) > 0:
         thiskernel = kernel1[good_stars, :][:, good_stars]
-        K1C = thiskernel + np.diag(X_var[good_stars])
+        K1C = thiskernel + np.diag(X_var[good_stars]) * (1+beta)
         thisfactor = cho_factor(K1C, overwrite_a = True)
         thislogdet = 2. * np.sum(np.log(np.diag(thisfactor[0])))
         Lx = LxOrLy(thislogdet, thisfactor, X[good_stars])
         gradLx = np.zeros_like(Z)
-        gradLx[good_stars, :] = dLdZ(X[good_stars], Z[good_stars, :], thisfactor, thiskernel, theta_band) 
-        dLdrbf = dLdhyper(X[good_stars], Z[good_stars, :], theta_rbf, thiskernel, thisfactor) 
+        gradLx[good_stars, :] = dLdZ(X[good_stars], Z[good_stars, :], thisfactor, thiskernel, Bx) 
+        dLdrbf = dLdhyper(X[good_stars], Z[good_stars, :], Ax, thiskernel, thisfactor) 
         dLdband = dLdhyper_band(X[good_stars], Z[good_stars, :], thiskernel, thisfactor) 
     else:
         Lx = 0
@@ -158,8 +158,8 @@ def cygnet_likelihood_d_worker_new(task):
     return Lx, gradLx, dLdrbf, dLdband
 
 def cygnet_likelihood_l_worker_new(task):
-    Y, Y_var, Z, kernel2_norbf, gamma_band, gamma_rbf = task
-    kernel2 = gamma_rbf * kernel2_norbf
+    Y, Y_var, Z, By, Ay = task
+    kernel2 = kernelRBF(Z, Ay, By)
     good_stars = np.isfinite(Y) * np.isfinite(Y_var)
     thiskernel = kernel2[good_stars, :][:, good_stars]
     K2C = thiskernel + np.diag(Y_var[good_stars])
@@ -167,8 +167,8 @@ def cygnet_likelihood_l_worker_new(task):
     thislogdet = 2. * np.sum(np.log(np.diag(thisfactor[0])))
     Ly = LxOrLy(thislogdet, thisfactor, Y[good_stars])
     gradLy = np.zeros_like(Z)
-    gradLy[good_stars, :] = dLdZ(Y[good_stars], Z[good_stars, :], thisfactor, thiskernel, gamma_band)            
-    dLdrbf = dLdhyper(Y[good_stars], Z[good_stars, :], gamma_rbf, thiskernel, thisfactor)
+    gradLy[good_stars, :] = dLdZ(Y[good_stars], Z[good_stars, :], thisfactor, thiskernel, By)            
+    dLdrbf = dLdhyper(Y[good_stars], Z[good_stars, :], Ay, thiskernel, thisfactor)
     dLdband = dLdhyper_band(Y[good_stars], Z[good_stars, :], thiskernel, thisfactor)
     return Ly, gradLy, dLdrbf, dLdband
 
@@ -177,51 +177,23 @@ def LxOrLy(log_K_det, factor, data):
     return -0.5 * len(data) * np.log(2*np.pi) - 0.5 * log_K_det - 0.5 * np.dot(data, cho_solve(factor, data))
 
 
-def lnL(pars, X, Y, Z_initial, X_var, Y_var, X_mask = None, Y_mask = None, fixed = None, bands = None):  
+def lnL(pars, X, Y, Z_initial, X_var, Y_var, beta = 0, X_mask = None, Y_mask = None):  
 
     N = Z_initial.shape[0]
     Q = Z_initial.shape[1]
     D = X.shape[1]
     L = Y.shape[1]
-
-    if bands is not None:
-        theta_band0, theta_band1, gamma_band0 = bands
-    
-    # if any(i < 0 for i in pars[(N*Q):]): 
-    #     print('hyper parameters negative!') 
-    #     return 1e12, 1e12 * np.ones_like(pars) #np.inf, np.inf * np.ones_like(pars)
-   
-    # else:            
-    Z = np.reshape(pars[:(N*Q)], (N, Q)) 
         
-    theta_band = pars[(-2*L-4):(-2*L-2)]
-    gamma_band = pars[(-2*L-2):(-L-2)]
-    theta_rbf = pars[-L-2:-L]
-    gamma_rbf = pars[-L:]
-    if fixed == 'rbf':
-        theta_rbf = np.ones(2)
-        gamma_rbf = np.ones(L)
-    if fixed == 'band':
-        theta_band = np.ones(2)
-        theta_band[0] *= theta_band0
-        theta_band[1] *= theta_band1
-        gamma_band = np.ones(L)
-        gamma_band *= gamma_band0
+    Z = np.reshape(pars[:(N*Q)], (N, Q)) 
+    # pars = Z, Ax, Bx, Ay, By 
+    Ax = pars[-2*L-2]
+    Bx = pars[-2*L-1]
+    Ay = pars[-2*L:-L]
+    By = pars[-L:]
+    #print(Ax, Bx, Ay, By)
     
-    #print(theta_rbf, gamma_rbf, theta_band, gamma_band)
-    #assert theta_rbf.shape == 1
-    
-    # theta_rbf = np.ones(2)
-    # gamma_rbf = np.ones(L)
-    # theta_band = np.ones(2)
-    # gamma_band = np.ones(L)
-    
-    # to speed things up... this part stays constant for all dimensions, only rbf parameter changes
-    kernel1_norbf0 = kernelRBF_norbf(Z, theta_band[0])
-    kernel2_norbf0 = kernelRBF_norbf(Z, gamma_band[0])
-    kernel1_norbf = kernelRBF_norbf(Z, theta_band[1])
-    if L == 2:                                                                  # NEEDS CHANGING IF L > 2!!!
-        kernel2_norbf = kernelRBF_norbf(Z, gamma_band[1])
+    # fixed for all d
+    kernel1 = kernelRBF(Z, Ax, Bx)
     
     if X_mask is None:
         X_mask = np.ones_like(X).astype(bool)
@@ -230,21 +202,22 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, X_mask = None, Y_mask = None, fixed
     
     Lx, Ly = 0., 0.
     gradLx, gradLy = np.zeros_like(Z), np.zeros_like(Z)
-    gradLx_rbf, gradLx_band = np.zeros_like(theta_rbf), np.zeros_like(theta_band)
-    gradLy_rbf, gradLy_band = np.zeros_like(gamma_rbf), np.zeros_like(gamma_band)
-
-    tasks = [(X[:, d], X_var[:, d], Z, kernel1_norbf0, kernel1_norbf, theta_band, theta_rbf, d) for d in range(D)]        
+    gradLx_rbf, gradLx_band = 0, 0 #np.zeros_like(Ax), np.zeros_like(Bx)
+    gradLy_rbf, gradLy_band = np.zeros_like(Ay), np.zeros_like(By)
+    
+    
+    tasks = [(X[:, d], X_var[:, d], Z, kernel1, Bx, Ax, beta) for d in range(D)]        
     for i, result in enumerate(map(cygnet_likelihood_d_worker_new, tasks)):
         Lx += result[0]
         gradLx += result[1]
-        if i == 0:
-            gradLx_rbf[0] += result[2]
-            gradLx_band[0] += result[3]
-        else:
-            gradLx_rbf[1] += result[2]
-            gradLx_band[1] += result[3]
+        # if i == 0:
+        gradLx_rbf += result[2]
+        gradLx_band += result[3]
+        # else:
+        #     gradLx_rbf[1] += result[2]
+        #     gradLx_band[1] += result[3]
         
-    tasks = [(Y[:, l], Y_var[:, l], Z, kernel2_norbf0, gamma_band[l], gamma_rbf[l]) for l in range(L)]    
+    tasks = [(Y[:, l], Y_var[:, l], Z, By[l], Ay[l]) for l in range(L)]    
     for i, result in enumerate(map(cygnet_likelihood_l_worker_new, tasks)):
         Ly += result[0]
         gradLy += result[1]   
@@ -256,7 +229,7 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, X_mask = None, Y_mask = None, fixed
     L = Lx + Ly + Lz   
     gradLZ = gradLx + gradLy + dlnpdZ      
     gradLZ = np.reshape(gradLZ, (N * Q, ))   # reshape gradL back into 1D array  
-    gradL = np.hstack((gradLZ, gradLx_band, gradLy_band, gradLx_rbf, gradLy_rbf))
+    gradL = np.hstack((gradLZ, gradLx_rbf, gradLx_band, gradLy_rbf, gradLy_band))
     assert gradL.shape == pars.shape
     #print(-2.*Lx, -2.*Ly, -2.*Lz, -2.*L)
     
@@ -299,20 +272,20 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, X_mask = None, Y_mask = None, fixed
 # -------------------------------------------------------------------------------
 
 
-def mean_var(Z, Zj, data, data_var, rbf, band, data_mask = None):
+def mean_var(Z, Zj, data, data_var, A, B, data_mask = None):
     N = Z.shape[0]
-    B = np.zeros((N, ))
+    Bs = np.zeros((N, ))
     for i in range(N):
-        B[i] = -0.5 * np.dot((Z[i, :] - Zj).T, (Z[i, :] - Zj))   
+        Bs[i] = -0.5 * np.dot((Z[i, :] - Zj).T, (Z[i, :] - Zj))   
     
     # prediction for test object: loop over d is in previous function
     if data.ndim == 1:
-        K = kernelRBF(Z, rbf, band)
+        K = kernelRBF(Z, A, B)
         KC = K + np.diag(data_var)
-        k_Z_zj = rbf * np.exp(band * B)
+        k_Z_zj = A * np.exp(B * Bs)
         factor = cho_factor(KC, overwrite_a = True)
         mean = np.dot(data.T, cho_solve(factor, k_Z_zj))
-        var = rbf - np.dot(k_Z_zj.T, cho_solve(factor, k_Z_zj))
+        var = A - np.dot(k_Z_zj.T, cho_solve(factor, k_Z_zj))
         return mean, var, k_Z_zj, factor
     
     # prediction for training objects
@@ -322,27 +295,27 @@ def mean_var(Z, Zj, data, data_var, rbf, band, data_mask = None):
         D = data.shape[1]
         mean_j = []
         var_j = [] 
-        K0 = kernelRBF(Z, rbf[0], band[0])
-        K1 = kernelRBF(Z, rbf[1], band[1])
+        K = kernelRBF(Z, A, B)
+        #K1 = kernelRBF(Z, rbf[1], band[1])
         for d in range(D):
-            if d == 0:
-                K = K0
-                band_d = band[0]
-                rbf_d = rbf[0]
-            if d > 0:
-                K = K1
-                band_d = band[1]
-                rbf_d = rbf[1]
+            # if d == 0:
+            #     K = K0
+            #     band_d = band[0]
+            #     rbf_d = rbf[0]
+            # if d > 0:
+            #     K = K1
+            #     band_d = band[1]
+            #     rbf_d = rbf[1]
             good_stars = data_mask[:, d]
             KC = K[good_stars, :][:, good_stars] + np.diag(data_var[good_stars, d])
-            k_Z_zj = rbf_d * np.exp(band_d * B[good_stars])
+            k_Z_zj = A * np.exp(B * Bs[good_stars])
             factor = cho_factor(KC, overwrite_a = True)
             mean_j.append(np.dot(data[good_stars, d].T, cho_solve(factor, k_Z_zj)))
-            var_j.append((rbf_d - np.dot(k_Z_zj.T, cho_solve(factor, k_Z_zj))))# [0]) 
+            var_j.append((A - np.dot(k_Z_zj.T, cho_solve(factor, k_Z_zj))))# [0]) 
         return np.array(mean_j), np.array(var_j), k_Z_zj
     
 
-def lnL_znew(pars, X_new_j, X_var_new_j, Z, X, X_var, rbf, band, X_mask = None, X_mask_new = None): 
+def lnL_znew(pars, X_new_j, X_var_new_j, Z, X, X_var, A, B, X_mask = None, X_mask_new = None): 
     
     if X_mask is None:
         X_mask = np.ones_like(X).astype(bool)
@@ -355,23 +328,23 @@ def lnL_znew(pars, X_new_j, X_var_new_j, Z, X, X_var, rbf, band, X_mask = None, 
     like = 0.
     gradL = 0.
     for d in range(D):
-        if d == 0: 
-            rbf_d = rbf[0]
-            band_d = band[0]
-        else: 
-            rbf_d = rbf[1]
-            band_d = band[1]
+        # if d == 0: 
+        #     rbf_d = rbf[0]
+        #     band_d = band[0]
+        # else: 
+        #     rbf_d = rbf[1]
+        #     band_d = band[1]
         if X_mask_new[d] == True:
             good_stars = X_mask[:, d]
             Nd = np.sum(good_stars)
-            mean, var, k_Z_zj, factor = mean_var(Z[good_stars, :], Zj, X[good_stars, d], X_var[good_stars, d], rbf_d, band_d) # used to be rbf[d]
+            mean, var, k_Z_zj, factor = mean_var(Z[good_stars, :], Zj, X[good_stars, d], X_var[good_stars, d], A, B) # used to be rbf[d]
             assert var > 0.
             
             like += -0.5 * np.dot((X_new_j[d] - mean).T, (X_new_j[d] - mean)) / \
                               (var + X_var_new_j[d]) - 0.5 * np.log(var + X_var_new_j[d]) - 0.5 * Nd * np.log(2*np.pi)
             
             dLdmu, dLdsigma2 = dLdmusigma2(X_new_j[d], mean, (var + X_var_new_j[d]))
-            dmudZ, dsigma2dZ = dmusigma2dZ(X[good_stars, d], factor, Z[good_stars, :], Zj, k_Z_zj, band_d)        
+            dmudZ, dsigma2dZ = dmusigma2dZ(X[good_stars, d], factor, Z[good_stars, :], Zj, k_Z_zj, B)        
             #gradL += np.dot(dLdmu, dmudZ) + np.dot(dLdsigma2, dsigma2dZ)  # changed this on Oct 29, 2021
             gradL += dLdmu * dmudZ + dLdsigma2 * dsigma2dZ
     return -2.*like, -2.*gradL
@@ -416,10 +389,10 @@ def predictY(X_new, X_var_new, X, X_var, Y, Y_var, Z_final, hyper_params, y0, z0
     
     # Q = Z_final.shape[1]
     
-    theta_band, gamma_band, theta_rbf, gamma_rbf = hyper_params
+    Ax, Bx, Ay, By = hyper_params
     
     # get new set of latent parameters for the new object given the new spectrum!        
-    res = op.minimize(lnL_znew, x0 = z0, args = (X_new, X_var_new, Z_final, X, X_var, theta_rbf, theta_band, X_mask, X_mask_new), method = 'L-BFGS-B', jac = True, 
+    res = op.minimize(lnL_znew, x0 = z0, args = (X_new, X_var_new, Z_final, X, X_var, Ax, Bx, X_mask, X_mask_new), method = 'L-BFGS-B', jac = True, 
                    options={'gtol':1e-12, 'ftol':1e-12})   
     Z_opt = res.x
     success_z = res.success
@@ -440,7 +413,7 @@ def predictY(X_new, X_var_new, X, X_var, Y, Y_var, Z_final, hyper_params, y0, z0
 def predictX(Y_new, Y, Y_var, Z_final, hyper_params, z0, name):
     
     Q = Z_final.shape[1]    
-    theta_band, gamma_band, theta_rbf, gamma_rbf = hyper_params
+    Ax, Bx, Ay, By = hyper_params
     
     # sampling the latent space to see whether Z is multimodal (this is basically a repetition of the previous step, just trying to get the best set of new latents)
     print('sampling latent space via MCMC...')
@@ -448,7 +421,7 @@ def predictX(Y_new, Y, Y_var, Z_final, hyper_params, z0, name):
     nsteps = 200  
     ndim = Q              
     p0 = GetInitialPositionsBalls(nwalkers, z0, ndim)
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_givenY, args = (Y_new, Z_final, Y, Y_var, gamma_rbf, gamma_band))
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_givenY, args = (Y_new, Z_final, Y, Y_var, Ay, By))
     sampler.run_mcmc(p0, nsteps, rstate0 = np.random.get_state())
     samples = sampler.chain[:, int(nsteps/2):, :].reshape((-1, ndim))
     

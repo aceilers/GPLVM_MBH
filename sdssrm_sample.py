@@ -62,7 +62,7 @@ np.random.seed(40)
 # Shen+2019 all SDSS-RM targets
 # -------------------------------------------------------------------------------
 
-S19 = Table.read('Shen2019_SDSSRM.fits', format = 'fits')
+S19 = Table.read('../RM_black_hole_masses/Shen2019_SDSSRM.fits', format = 'fits')
 
 #cuts = (S19['LOGBH_MGII_S11'] > 0) * (S19['LOGLBOL'] > 0)
 #plt.scatter(S19['LOGBH_MGII_S11'][cuts], S19['LOGLBOL'][cuts])
@@ -85,13 +85,13 @@ S19 = Table.read('Shen2019_SDSSRM.fits', format = 'fits')
 # Grier+2017: 44 Hbeta lag RM BH measurements + 18 Halpha RM BH measurements (partially overlapping!)
 # -------------------------------------------------------------------------------
 
-G17_4 = Table.read('Grier2017_table4_Hbeta.txt', format = 'ascii') 
+G17_4 = Table.read('../RM_black_hole_masses/Grier2017_table4_Hbeta.txt', format = 'ascii') 
 G17_4['logMBH'] = np.log10(G17_4['MBH'] * 1e7)
 G17_4['E_logMBH'] = G17_4['MBH_err_p'] / (G17_4['MBH'] * np.log(10))
 G17_4['e_logMBH'] = G17_4['MBH_err_m'] / (G17_4['MBH'] * np.log(10))
 G17_4['survey'] = 'G17_SDSSRM_Hbeta'
 
-G17_5 = Table.read('Grier2017_table5_Halpha.txt', format = 'ascii')
+G17_5 = Table.read('../RM_black_hole_masses/Grier2017_table5_Halpha.txt', format = 'ascii')
 G17_5['logMBH'] = np.log10(G17_5['MBH'] * 1e7)
 G17_5['E_logMBH'] = G17_5['MBH_err_p'] / (G17_5['MBH'] * np.log(10))
 G17_5['e_logMBH'] = G17_5['MBH_err_m'] / (G17_5['MBH'] * np.log(10))
@@ -148,7 +148,7 @@ xx_new = join(S19, xx, keys = 'RMID')
 xx = xx_new.copy()
 
 found = np.ones((len(xx)), dtype = bool)
-f = open('BOSS/download_spectra.txt', 'w') 
+f = open('../RM_black_hole_masses/BOSS/download_spectra.txt', 'w') 
 for i in range(len(xx)):
     if len(xx['PLATE_ALL'][i].split()) == 1:
         f.write('{},{},{} \n'.format(xx['PLATE_ALL'][i].split()[0], xx['MJD_ALL'][i].split()[0], xx['FIBERID_ALL'][i].split()[0]))
@@ -194,7 +194,7 @@ def lnlike(pars, flux, ivar, wl):
 # halpha = 6563
 
 min_waves, max_waves = 1220, 5000.1
-wave_grid = np.arange(min_waves, max_waves, 3)
+wave_grid = np.arange(min_waves, max_waves, 2)
 
 civ = 1549.06
 ciii = 1908.73 # CIII]
@@ -249,12 +249,12 @@ data_ivar = np.zeros((len(xx), len(wave_grid)+5))
 dl = 5
 
 # table with BOSS spectra
-boss = Table.read('BOSS/optical_search_287819.csv')
+boss = Table.read('../RM_black_hole_masses/BOSS/optical_search_287819.csv')
 
 for i in range(len(xx)):
 
     if len(xx['PLATE_ALL'][i].split()) == 1:
-        zz = fits.open('BOSS/spec-{}-{}-{}.fits'.format(xx['PLATE_ALL'][i].split()[0], xx['MJD_ALL'][i].split()[0], xx['FIBERID_ALL'][i].split()[0]))
+        zz = fits.open('../RM_black_hole_masses/BOSS/spec-{}-{}-{}.fits'.format(xx['PLATE_ALL'][i].split()[0], xx['MJD_ALL'][i].split()[0], xx['FIBERID_ALL'][i].split()[0]))
         find = (boss['#plate'] == int(xx['PLATE_ALL'][i].split()[0])) * (boss['mjd'] == int(xx['MJD_ALL'][i].split()[0])) * (boss['fiberid'] == int(xx['FIBERID_ALL'][i].split()[0]))
         snr = float(boss['sn_median_r'][find])  
    
@@ -266,10 +266,10 @@ for i in range(len(xx)):
         #print(i, snr1, xx['PLATE_ALL'][i].split()[0], xx['MJD_ALL'][i].split()[0], xx['FIBERID_ALL'][i].split()[0])
         #print(i, snr2, xx['PLATE_ALL'][i].split()[1], xx['MJD_ALL'][i].split()[1], xx['FIBERID_ALL'][i].split()[1])
         if snr1 >= snr2:
-            zz = fits.open('BOSS/spec-{}-{}-{}.fits'.format(xx['PLATE_ALL'][i].split()[0], xx['MJD_ALL'][i].split()[0], xx['FIBERID_ALL'][i].split()[0]))
+            zz = fits.open('../RM_black_hole_masses/BOSS/spec-{}-{}-{}.fits'.format(xx['PLATE_ALL'][i].split()[0], xx['MJD_ALL'][i].split()[0], xx['FIBERID_ALL'][i].split()[0]))
             snr = snr1
         elif snr2 > snr1:
-            zz = fits.open('BOSS/spec-{}-{}-{}.fits'.format(xx['PLATE_ALL'][i].split()[1], xx['MJD_ALL'][i].split()[1], xx['FIBERID_ALL'][i].split()[1]))
+            zz = fits.open('../RM_black_hole_masses/BOSS/spec-{}-{}-{}.fits'.format(xx['PLATE_ALL'][i].split()[1], xx['MJD_ALL'][i].split()[1], xx['FIBERID_ALL'][i].split()[1]))
             snr = snr2
     
     data_q = zz[1].data
@@ -382,7 +382,7 @@ for i in range(len(xx)):
     plt.xlim(1190, 5000.1)
     #plt.axhline(mean, color = colors[5], lw = 2)
     plt.legend(fontsize = 16)
-    plt.savefig('BOSS/plots/spectrum_SDSSRM_{}.pdf'.format(i))
+    plt.savefig('../RM_black_hole_masses/BOSS/plots/spectrum_SDSSRM_{}.pdf'.format(i))
     plt.close()
     
 
@@ -451,14 +451,14 @@ print('done!')
 # -------------------------------------------------------------------------------
 
 # HST data
-f = open('data_HST_1220_5000_3A.pickle', 'rb')
+f = open('../RM_black_hole_masses/data_HST_1220_5000_2A.pickle', 'rb')
 data_hst, data_ivar_hst = pickle.load(f)
 f.close()
 
 data_all = np.vstack([data, data_hst])
 data_ivar_all = np.vstack([data_ivar, data_ivar_hst])
 
-f = open('data_HST_SDSS_1220_5000_3A.pickle', 'wb')
+f = open('../RM_black_hole_masses/data_HST_SDSS_1220_5000_2A.pickle', 'wb')
 pickle.dump([data_all, data_ivar_all], f)
 f.close()
 

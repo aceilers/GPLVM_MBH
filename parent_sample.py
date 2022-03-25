@@ -6,6 +6,8 @@ Created on Sat Jun 12 20:22:48 2021
 @author: eilers
 """
 
+import sys
+sys.path.append('../RM_black_hole_masses')
 import numpy as np
 from astropy import units as u
 import astropy.cosmology as cosmo
@@ -373,12 +375,11 @@ mgii = 2798.7
 hbeta = 4861.35
 oiii = 4959 #[OIII]
 
-dline = 60.
-dlam_noline = 20.
-dlam_line = 2.
-
 lines = np.array([lya, siiv, civ, ciii, mgii, hbeta])
 
+# dline = 60.
+# dlam_noline = 20.
+# dlam_line = 2.
 
 # wave_grid = list([min_waves]) #np.arange(max(np.round(lya) - dline, min_waves), np.round(lya) + dline, 2))
 # for l in lines:
@@ -398,7 +399,7 @@ lines = np.array([lya, siiv, civ, ciii, mgii, hbeta])
 # wave_grid = np.array(wave_grid)
 # print('number of pixels: {}'.format(len(wave_grid)))
 
-wave_grid = np.arange(min_waves, max_waves, 3)
+wave_grid = np.arange(min_waves, max_waves, 2)
 data = np.zeros((len(qsos), len(wave_grid)+5)) 
 data_ivar = np.zeros((len(qsos), len(wave_grid)+5)) 
 
@@ -532,7 +533,7 @@ for i, q in enumerate(qsos.keys()):
     data[i, 0] = qsos[q].MBH 
     data_ivar[i, 0] = 1 / (qsos[q].MBH_err**2 + log_f_err**2)
     data[i, 1] = qsos[q].z
-    data_ivar[i, 1] = 0
+    data_ivar[i, 1] = 0.0001**(-2.)
     data[i, 2] = qsos[q].SNR
     data_ivar[i, 2] = 0
     data[i, 3] = qsos[q].alpha
@@ -564,7 +565,7 @@ for i, q in enumerate(qsos.keys()):
         plt.axvline(l)
     #plt.axhline(mean, color = colors[5], lw = 2)
     plt.legend(fontsize = 16)
-    plt.savefig('BOSS/plots/spectrum_HST_{}.pdf'.format(i))
+    plt.savefig('../RM_black_hole_masses/BOSS/plots/spectrum_HST_{}.pdf'.format(i))
     plt.show()
     
 # -------------------------------------------------------------------------------
@@ -576,7 +577,7 @@ for i, q in enumerate(qsos.keys()):
 # save files
 # -------------------------------------------------------------------------------
 
-f = open('data_HST_1220_5000_3A.pickle', 'wb')
+f = open('../RM_black_hole_masses/data_HST_1220_5000_2A.pickle', 'wb')
 pickle.dump([data, data_ivar], f)
 f.close()
 

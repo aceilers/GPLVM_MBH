@@ -35,10 +35,10 @@ from functions_s_gplvm import PCAInitial, mean_var, Chi2_Matrix, NN, predictY, l
 # import loop parameters
 # -------------------------------------------------------------------------------
 
-Q_start = int(sys.argv[-2])
-Q_end = int(sys.argv[-1])
-print(Q_start, Q_end)
-# Q_start, Q_end = 30, 31
+# Q_start = int(sys.argv[-2])
+# Q_end = int(sys.argv[-1])
+# print(Q_start, Q_end)
+Q_start, Q_end = 0, 1
 
 # -------------------------------------------------------------------------------
 # parameters
@@ -60,7 +60,8 @@ plot_limits['$\log_{10}\,L_{\\rm bol}$'] = (40, 50)
 
 # first entries: black hole masses, z, SNR, BAL, survey, normalization mean, Lbol
 # remaining entries: spectra
-f = open('data_HST_SDSS_1220_5000_3A.pickle', 'rb') 
+f = open('../RM_black_hole_masses/data_HST_SDSS_1220_5000_2A.pickle', 'rb') 
+#f = open('data_HST_SDSS_1220_5000_2A.pickle', 'rb') 
 #f = open('data_HST_SDSS_flexwave2_1220_5000.pickle', 'rb')
 data, data_ivar = pickle.load(f)
 f.close()
@@ -91,13 +92,8 @@ f.close()
 '''
 
 cross = True
-fixed = 'band'
 
-theta_band0, theta_band1, gamma_band0 = 2, 2, 1 
-bands = theta_band0, theta_band1, gamma_band0
-
-#name1 = 'ps_s{}_HST_SDSS_flexwave2_1220_5000_fixed{}_{}_{}_{}_noSNRcut'.format(seed, fixed, theta_band0, theta_band1, gamma_band0) 
-name1 = 'ps_s{}_HST_SDSS_1220_5000_3A_fixed{}_{}_{}_{}_noSNRcut'.format(seed, fixed, theta_band0, theta_band1, gamma_band0) 
+name1 = 'ps_s{}_HST_SDSS_1220_5000_2A_noSNRcut'.format(seed) 
 
 # -------------------------------------------------------------------------------
 # initialize parameters
@@ -142,10 +138,12 @@ for qq in range(Q_start, Q_end):
     # prepare rectangular training data
     # -------------------------------------------------------------------------------
     
-    X = data_scaled[:, 6:] # Lbol + spectra
-    X_var = 1 / data_ivar_scaled[:, 6:]
+    X = data_scaled[:, 7:] # only spectra
+    X_var = 1 / data_ivar_scaled[:, 7:]
     inds_label = np.zeros(data_scaled.shape[1], dtype = bool)
-    inds_label[0] = True 
+    inds_label[0] = True # black hole mass
+    inds_label[6] = True # Lbol
+    #inds_label[1] = True # redshift
     Y = data_scaled[:, inds_label] 
     Y_var = (1 / data_ivar_scaled[:, inds_label])
     
@@ -180,24 +178,20 @@ for qq in range(Q_start, Q_end):
     # hyper parameters
     # -------------------------------------------------------------------------------
     
-    theta_rbf = np.ones(2)
-    gamma_rbf = np.ones(L)
-    theta_band = np.ones(2)
-    gamma_band = np.ones(L)
-    
-    if fixed == 'band':
-        theta_band[0] *= theta_band0
-        theta_band[1] *= theta_band1
-        gamma_band *= gamma_band0
+    Ax = np.ones(1) # theta_rbf
+    Ay = np.ones(L) #L # gamma_rbf
+    Bx = np.ones(1) # theta_band
+    By = np.ones(L) #L # gamma_band
         
-    hyper_params = np.hstack([theta_band, gamma_band, theta_rbf, gamma_rbf]) #np.ones(3+L) #np.ones(D+L)
+    #hyper_params = np.hstack([Bx, By, Ax, Ay]) 
+    hyper_params = np.hstack([Ax, Bx, Ay, By]) 
     
     # -------------------------------------------------------------------------------
     # initialize parameters
     # -------------------------------------------------------------------------------
     
     
-    print('hyper parameters: theta_band={}, gamma_band={}, theta_rbf={}, gamma_rbf={}'.format(theta_band, gamma_band, theta_rbf, gamma_rbf))
+    print('hyper parameters: Ax={}, Bx={}, Ay={}, By={}'.format(Ax, Bx, Ay, By))
     
     assert np.any(X_var != 0)
     
@@ -216,9 +210,11 @@ for qq in range(Q_start, Q_end):
     bounds_min[(N*Q):] = 0.1 # avoid negative hyperparameters
     bnds = [(bounds_min[b], None) for b in range(0, len(bounds_min))]
     
+    beta = D / L
+    
     t1 = time.time()
     
-    res = op.minimize(lnL, x0 = x0, args = (X_input, Y_input, Z_initial, X_var_input, Y_var_input, X_mask, Y_mask, fixed, bands), 
+    res = op.minimize(lnL, x0 = x0, args = (X_input, Y_input, Z_initial, X_var_input, Y_var_input, beta, X_mask, Y_mask), 
                       method = 'L-BFGS-B', jac = True, bounds = bnds, options={'gtol':1e-9, 'ftol':1e-9})
     
     print(res.success)
@@ -230,30 +226,14 @@ for qq in range(Q_start, Q_end):
     
     Z_final = np.reshape(pars_opt[:(N*Q)], (N, Q))
     
-    theta_band = pars_opt[(-2*L-4):(-2*L-2)]
-    gamma_band = pars_opt[(-2*L-2):(-L-2)]
-    theta_rbf = pars_opt[-L-2:-L]
-    gamma_rbf = pars_opt[-L:]
+    Ax = pars_opt[-2*L-2]
+    Bx = pars_opt[-2*L-1]
+    Ay = pars_opt[-2*L:-L]
+    By = pars_opt[-L:]
     
-    if fixed == 'rbf':
-        theta_rbf = np.ones(2)
-        gamma_rbf = np.ones(L)
-    if fixed == 'band':
-        theta_band = np.ones(2)
-        theta_band[0] *= theta_band0
-        theta_band[1] *= theta_band1
-        gamma_band = np.ones(L)
-        gamma_band *= gamma_band0
-        
+    hyper_params = np.array([Ax, Bx, Ay, By])
     
-    # theta_rbf = np.ones(2)
-    # gamma_rbf = np.ones(L)
-    # theta_band = np.ones(2)
-    # gamma_band = np.ones(L)
-    
-    hyper_params = np.array([theta_band, gamma_band, theta_rbf, gamma_rbf])
-    
-    print('new hyper parameters: ', theta_band, gamma_band, theta_rbf, gamma_rbf)
+    print('new hyper parameters: ', Ax, Bx, Ay, By)
     #print('new latent parameters: ', Z_final)
 
     # -------------------------------------------------------------------------------
@@ -318,7 +298,7 @@ for qq in range(Q_start, Q_end):
         # no optimization required!
         for l in range(L):
             good_stars = Y_mask[:, l]
-            Y_new_n, Y_new_var_n, k_Z_zj, factor = mean_var(Z_final, Z_opt_n, Y_input[good_stars, l], Y_var_input[good_stars, l], gamma_rbf[l], gamma_band)                
+            Y_new_n, Y_new_var_n, k_Z_zj, factor = mean_var(Z_final, Z_opt_n, Y_input[good_stars, l], Y_var_input[good_stars, l], Ay[l], By[l])                
             Y_new_test[n, l] = Y_new_n * scales[inds_label][l] + pivots[inds_label][l]
             Y_new_var_test[n, l] = Y_new_var_n * scales[inds_label][l]**2
             print('new Y!!! Y = ', Y_new_test[n, l], 'pm ', np.sqrt(Y_new_var_test[n, l]), '-- original: ', data[ind_test][n][l])
@@ -334,7 +314,8 @@ for qq in range(Q_start, Q_end):
         all_Y_new_var[qq, :] = Y_new_var_test
         print(all_Y_new[qq], data[qq, inds_label])   
     
-    f = open('files/f_{}.pickle'.format(name), 'wb')
+    f = open('../RM_black_hole_masses/files/f_{}.pickle'.format(name), 'wb')
+    # f = open('files/f_{}.pickle'.format(name), 'wb')
     pickle.dump((all_Y_new, all_Y_new_var, sort_r, Z_final, Z_opt_n, hyper_params, res.success, success_z), f)
     f.close()
 
