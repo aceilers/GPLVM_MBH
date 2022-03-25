@@ -93,14 +93,14 @@ f.close()
 
 cross = True
 
-name1 = 'ps_s{}_HST_SDSS_1220_5000_2A_band1fixed_noSNRcut'.format(seed) 
+name1 = 'ps_s{}_HST_SDSS_1220_5000_2A_band1fixed_lag_noSNRcut'.format(seed) 
 
 # -------------------------------------------------------------------------------
 # initialize parameters
 # -------------------------------------------------------------------------------
 
 if cross:
-    L = 3
+    L = 2
     all_Y_new = np.zeros((data.shape[0], L))
     all_Y_new_var = np.zeros((data.shape[0], L))
     name1 += '_cross'
@@ -142,7 +142,8 @@ for qq in range(Q_start, Q_end):
     X = data_scaled[:, 7:] # only spectra
     X_var = 1 / data_ivar_scaled[:, 7:]
     inds_label = np.zeros(data_scaled.shape[1], dtype = bool)
-    inds_label[0] = True # black hole mass
+    #inds_label[0] = True # black hole mass
+    inds_label[4] = True # lag
     if L >= 2:
         inds_label[6] = True # Lbol
     if L >= 3:

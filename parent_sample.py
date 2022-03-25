@@ -72,7 +72,7 @@ class quasars:
        
     def __init__(self, name, z, MBH, MBH_err, M1450=None, M1450_err=None, Lbol=None, Lbol_err=None, L1350=None, L1350_err=None, SNR = None, survey = None, 
                  VP_Woo15 = None, VP_err_Woo15 = None, 
-                 fwhm_MgII=None, fwhm_MgII_err=None, fwhm_CIV = None, fwhm_CIV_err = None, 
+                 fwhm_MgII=None, fwhm_MgII_err=None, fwhm_CIV = None, fwhm_CIV_err = None, lag = None, lag_err = None, 
                  VIS_file = None, NIR_file = None, HST_file = None):
         
         self.name = name
@@ -90,6 +90,8 @@ class quasars:
         self.fwhm_MgII_err = fwhm_MgII_err
         self.fwhm_CIV = fwhm_CIV
         self.fwhm_CIV_err = fwhm_CIV_err
+        self.lag = lag 
+        self.lag_err = lag_err
         self.VIS_file = VIS_file
         self.NIR_file = NIR_file
         self.HST_file = HST_file
@@ -194,131 +196,131 @@ class quasars:
 qsos = {}
 
 qsos['3C120'] = quasars(name = '3C120', z = 0.03301, MBH = 7.80, MBH_err = 0.04, L1350 = 44.399, L1350_err = 0.021, SNR = 12, survey = 'HST', 
-                        VP_Woo15 = 12.2, VP_err_Woo15 = 0.9, fwhm_CIV= 3093, fwhm_CIV_err=291, 
+                        VP_Woo15 = 12.2, VP_err_Woo15 = 0.9, fwhm_CIV= 3093, fwhm_CIV_err=291, lag = 27.2, lag_err = 1.1, 
                         HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_3C120.txt')
 
 # qsos['3C390'] = quasars(name = '3C390', z = 0.05610, MBH = 8.43, MBH_err = 0.10, L1350=43.869, L1350_err=0.003, SNR = 18, survey = 'HST', # should be: 8.38
-#                         VP_Woo15 = 278.1, VP_err_Woo15 = (24.4+31.6)/2, fwhm_CIV=5645, fwhm_CIV_err=202,
+#                         VP_Woo15 = 278.1, VP_err_Woo15 = (24.4+31.6)/2, fwhm_CIV=5645, fwhm_CIV_err=202, lag = 23.6, lag_err = 6.45, 
 #                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_3C390.3.txt')
 
 qsos['Ark120'] = quasars(name = 'Ark120', z = 0.03230, MBH = 8.14, MBH_err = 0.06, L1350=44.400, L1350_err=0.005, SNR = 17, survey = 'HST', 
-                        VP_Woo15 = 23.7, VP_err_Woo15 = (3.0+4.2)/2., fwhm_CIV=3471, fwhm_CIV_err=108,
+                        VP_Woo15 = 23.7, VP_err_Woo15 = (3.0+4.2)/2., fwhm_CIV=3471, fwhm_CIV_err=108, lag = 39.05, lag_err = 4.57, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_Ark120.txt')
 
 qsos['Fairall9'] = quasars(name = 'Fairall9', z = 0.04702, MBH = 8.38, MBH_err = 0.10, L1350=44.442, L1350_err=0.004, SNR = 24, survey = 'HST', #should be: 8.40
-                        fwhm_CIV=2649, fwhm_CIV_err=20,
+                        fwhm_CIV=2649, fwhm_CIV_err=20, lag = 17.40, lag_err = 3.75, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_Fairall9.txt')
 
 qsos['Mrk279'] = quasars(name = 'Mrk279', z = 0.03045, MBH = 7.51, MBH_err = 0.12, L1350=43.082, L1350_err=0.004, SNR = 9, survey = 'HST', # should be: 7.51
-                        VP_Woo15 = 7.2, VP_err_Woo15 = 0.8, fwhm_CIV=4093, fwhm_CIV_err=388,
+                        VP_Woo15 = 7.2, VP_err_Woo15 = 0.8, fwhm_CIV=4093, fwhm_CIV_err=388, lag = 16.70, lag_err = 3.90, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_Mrk279.txt')
 
 qsos['Mrk290'] = quasars(name = 'Mrk290', z = 0.02958, MBH = 7.36, MBH_err = 0.07, L1350=43.611, L1350_err=0.002, SNR = 24, survey = 'HST', 
-                        fwhm_CIV=2052, fwhm_CIV_err=36,
+                        fwhm_CIV=2052, fwhm_CIV_err=36, lag = 8.72, lag_err = 1.1, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_Mrk290.txt')
 
 qsos['Mrk335'] = quasars(name = 'Mrk335', z = 0.02578, MBH = 7.37, MBH_err = 0.05, L1350=43.953, L1350_err=0.001, SNR = 29, survey = 'HST', 
-                        fwhm_CIV=1772, fwhm_CIV_err=14,
+                        fwhm_CIV=1772, fwhm_CIV_err=14, lag = 14.1, lag_err = 0.4, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_Mrk335.txt')
 
 qsos['Mrk509'] = quasars(name = 'Mrk509', z = 0.03440, MBH = 8.12, MBH_err = 0.04, L1350=44.675, L1350_err=0.001, SNR = 107, survey = 'HST', 
-                        VP_Woo15 = 22.2, VP_err_Woo15 = 0.7, fwhm_CIV=3872, fwhm_CIV_err=18, 
+                        VP_Woo15 = 22.2, VP_err_Woo15 = 0.7, fwhm_CIV=3872, fwhm_CIV_err=18, lag = 79.6, lag_err = 5.75, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_Mrk509.txt')
 
 qsos['Mrk590'] = quasars(name = 'Mrk590', z = 0.02638, MBH = 7.65, MBH_err = 0.07, L1350=44.094, L1350_err=0.007, SNR = 17, survey = 'HST', 
-                        VP_Woo15 = 8.8, VP_err_Woo15 = (0.6+1.1)/2, fwhm_CIV=5362, fwhm_CIV_err=266,
+                        VP_Woo15 = 8.8, VP_err_Woo15 = (0.6+1.1)/2, fwhm_CIV=5362, fwhm_CIV_err=266, lag = 24.23, lag_err = 2.11, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_Mrk590.txt')
 
 qsos['Mrk817'] = quasars(name = 'Mrk817', z = 0.03145, MBH = 7.66, MBH_err = 0.07, L1350=44.326, L1350_err=0.001, SNR = 38, survey = 'HST', 
-                        VP_Woo15 = 12.6, VP_err_Woo15 = 1.2, fwhm_CIV=4580, fwhm_CIV_err=48,
+                        VP_Woo15 = 12.6, VP_err_Woo15 = 1.2, fwhm_CIV=4580, fwhm_CIV_err=48, lag = 19.05, lag_err = 2.45, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_Mrk817.txt')
 
 qsos['NGC3516'] = quasars(name = 'NGC3516', z = 0.00884, MBH = 7.47, MBH_err = 0.05, L1350=42.615, L1350_err=0.002, SNR = 20, survey = 'HST', 
-                        VP_Woo15 = 7.2, VP_err_Woo15 = 0.6, fwhm_CIV=2658, fwhm_CIV_err=34,
+                        VP_Woo15 = 7.2, VP_err_Woo15 = 0.6, fwhm_CIV=2658, fwhm_CIV_err=34, lag = 11.68, lag_err = 1.27, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_NGC3516.txt')
 
 qsos['NGC3783'] = quasars(name = 'NGC3783', z = 0.00973, MBH = 7.44, MBH_err = 0.08, L1350=43.400, L1350_err=0.001, SNR = 29, survey = 'HST', 
-                        VP_Woo15 = 4.4, VP_err_Woo15 = 0.6, fwhm_CIV=2656, fwhm_CIV_err=444,
+                        VP_Woo15 = 4.4, VP_err_Woo15 = 0.6, fwhm_CIV=2656, fwhm_CIV_err=444, lag = 10.2, lag_err = 2.8, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_NGC3783.txt')
 
 qsos['NGC4051'] = quasars(name = 'NGC4051', z = 0.00234, MBH = 6.20, MBH_err = 0.14, L1350=41.187, L1350_err=0.001, SNR = 23, survey = 'HST', 
-                          VP_Woo15 = 0.4, VP_err_Woo15 = 0.04, fwhm_CIV = 1122, fwhm_CIV_err=309, 
+                          VP_Woo15 = 0.4, VP_err_Woo15 = 0.04, fwhm_CIV = 1122, fwhm_CIV_err=309,  lag = 1.87, lag_err = 0.52, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_NGC4051.txt')
 
 qsos['NGC4593'] = quasars(name = 'NGC4593', z = 0.00900, MBH = 6.96, MBH_err = 0.09, L1350=43.761, L1350_err=0.005, SNR = 10, survey = 'HST', 
-                        VP_Woo15 = 2.1, VP_err_Woo15 = 0.3, fwhm_CIV=2952, fwhm_CIV_err=166,
+                        VP_Woo15 = 2.1, VP_err_Woo15 = 0.3, fwhm_CIV=2952, fwhm_CIV_err=166, lag = 3.73, lag_err = 0.75, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_NGC4593.txt')
 
 qsos['NGC5548'] = quasars(name = 'NGC5548', z = 0.01717, MBH = 7.80, MBH_err = 0.14, L1350=43.822, L1350_err=0.001, SNR = 36, survey = 'HST', 
-                        VP_Woo15 = 16.3, VP_err_Woo15 = 2.5, fwhm_CIV=1785, fwhm_CIV_err=82,
+                        VP_Woo15 = 16.3, VP_err_Woo15 = 2.5, fwhm_CIV=1785, fwhm_CIV_err=82, lag = 4.18, lag_err = 0.5*(1.3+0.86), 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_NGC5548.txt')
 
 qsos['NGC7469'] = quasars(name = 'NGC7469', z = 0.01632, MBH = 7.05, MBH_err = 0.05, L1350=43.909, L1350_err=0.001, SNR = 32, survey = 'HST', 
-                        VP_Woo15 = 4.8, VP_err_Woo15 = 1.0, fwhm_CIV=2725, fwhm_CIV_err=66,
+                        VP_Woo15 = 4.8, VP_err_Woo15 = 1.0, fwhm_CIV=2725, fwhm_CIV_err=66, lag = 4.5, lag_err = 0.75, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_NGC7469.txt')
 
 qsos['PG0026+129'] = quasars(name = 'PG0026+129', z = 0.14200, MBH = 8.56, MBH_err = 0.11, L1350=45.236, L1350_err=0.005, SNR = 25, survey = 'HST', 
-                        fwhm_CIV=1604, fwhm_CIV_err=50,
+                        fwhm_CIV=1604, fwhm_CIV_err=50, lag = 111.0, lag_err = 26.2, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG0026+129.txt')
 
 qsos['PG0052+251'] = quasars(name = 'PG0052+251', z = 0.15500, MBH = 8.54, MBH_err = 0.09, L1350=45.292, L1350_err=0.004, SNR = 21, survey = 'HST', 
-                        fwhm_CIV=5380, fwhm_CIV_err=87,
+                        fwhm_CIV=5380, fwhm_CIV_err=87, lag = 89.8, lag_err = 24.3, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG0052+251.txt')
 
 qsos['PG0804+761'] = quasars(name = 'PG0804+761', z = 0.10000, MBH = 8.81, MBH_err = 0.05, L1350=45.493, L1350_err=0.001, SNR = 34, survey = 'HST', 
-                        fwhm_CIV=3429, fwhm_CIV_err=23,
+                        fwhm_CIV=3429, fwhm_CIV_err=23, lag = 146.9, lag_err = 18.85, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG0804+761.txt')
 
 qsos['PG0953+414'] = quasars(name = 'PG0953+414', z = 0.23410, MBH = 8.41, MBH_err = 0.09, L1350=45.629, L1350_err=0.005, SNR = 18, survey = 'HST', 
-                        fwhm_CIV=3021, fwhm_CIV_err=74,
+                        fwhm_CIV=3021, fwhm_CIV_err=74, lag = 150.1, lag_err = 22.1, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG0953+414.txt')
 
 qsos['PG1226+023'] = quasars(name = 'PG1226+023', z = 0.15830, MBH = 8.92, MBH_err = 0.09, L1350=46.309, L1350_err=0.001, SNR = 93, survey = 'HST', 
-                        fwhm_CIV=3609, fwhm_CIV_err=29,
+                        fwhm_CIV=3609, fwhm_CIV_err=29, lag = 306.8, lag_err = 79.7, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG1226+023.txt')
 
 qsos['PG1229+204'] = quasars(name = 'PG1229+204', z = 0.06301, MBH = 7.83, MBH_err = 0.23, L1350=44.609, L1350_err=0.009, SNR = 28, survey = 'HST', 
-                        fwhm_CIV=4023, fwhm_CIV_err=163,
+                        fwhm_CIV=4023, fwhm_CIV_err=163, lag = 37.8, lag_err = 21.45, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG1229+204.txt')
 
 qsos['PG1307+085'] = quasars(name = 'PG1307+085', z = 0.15500, MBH = 8.61, MBH_err = 0.12, L1350=45.113, L1350_err=0.006, SNR = 14, survey = 'HST', 
-                        fwhm_CIV=3604, fwhm_CIV_err=111,
+                        fwhm_CIV=3604, fwhm_CIV_err=111, lag = 105.6, lag_err = 41.3, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG1307+085.txt')
 
 qsos['PG1426+015'] = quasars(name = 'PG1426+015', z = 0.08647, MBH = 9.08, MBH_err = 0.13, L1350=45.263, L1350_err=0.004, SNR = 45, survey = 'HST', 
-                        VP_Woo15 = 373.6, VP_err_Woo15 = (49.9+53.8)/2, fwhm_CIV=4220, fwhm_CIV_err=258,
+                        VP_Woo15 = 373.6, VP_err_Woo15 = (49.9+53.8)/2, fwhm_CIV=4220, fwhm_CIV_err=258, lag = 95.0, lag_err = 33.5, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG1426+015.txt')
 
 qsos['PG1613+658'] = quasars(name = 'PG1613+658', z = 0.12900, MBH = 8.42, MBH_err = 0.22, L1350=45.488, L1350_err=0.001, SNR = 37, survey = 'HST', 
-                        fwhm_CIV=6398, fwhm_CIV_err=51,
+                        fwhm_CIV=6398, fwhm_CIV_err=51, lag = 40.1, lag_err = 15.1, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG1613+658.txt')
 
 qsos['PG2130+099'] = quasars(name = 'PG2130+099', z = 0.06298, MBH = 7.63, MBH_err = 0.04, L1350=44.447, L1350_err=0.001, SNR = 22, survey = 'HST', 
-                        VP_Woo15 = 20.1, VP_err_Woo15 = 2.8, fwhm_CIV=2147, fwhm_CIV_err=18,
+                        VP_Woo15 = 20.1, VP_err_Woo15 = 2.8, fwhm_CIV=2147, fwhm_CIV_err=18, lag = 12.8, lag_err = 1.05, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_PG2130+099.txt')
 
 qsos['Arp151'] = quasars(name = 'Arp151', z = 0.02109, MBH = 6.83, MBH_err = 0.08, L1350=41.791, L1350_err=0.017, SNR = 6, survey = 'HST', 
-                        VP_Woo15 = 1.2, VP_err_Woo15 = 0.15, fwhm_CIV=1489, fwhm_CIV_err=26,
+                        VP_Woo15 = 1.2, VP_err_Woo15 = 0.15, fwhm_CIV=1489, fwhm_CIV_err=26, lag = 3.99, lag_err = 0.5*(0.49+0.68), 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_17data/HST_STIS_spectra_arp151.txt')
 
 qsos['Mrk1310'] = quasars(name = 'Mrk1310', z = 0.01956, MBH = 6.50, MBH_err = 0.14, L1350=41.715, L1350_err=0.025, SNR = 5, survey = 'HST', 
-                        VP_Woo15 = 0.7, VP_err_Woo15 = 0.15, fwhm_CIV=1434, fwhm_CIV_err=78,
+                        VP_Woo15 = 0.7, VP_err_Woo15 = 0.15, fwhm_CIV=1434, fwhm_CIV_err=78, lag = 3.66, lag_err = 0.6, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_17data/HST_STIS_spectra_mrk1310.txt')
 
 qsos['Mrk50'] = quasars(name = 'Mrk50', z = 0.02343, MBH = 7.50, MBH_err = 0.08, L1350=43.213, L1350_err=0.003, SNR = 19, survey = 'HST', 
-                        VP_Woo15 = 6.3, VP_err_Woo15 = 0.7, fwhm_CIV=2807, fwhm_CIV_err=63,
+                        VP_Woo15 = 6.3, VP_err_Woo15 = 0.7, fwhm_CIV=2807, fwhm_CIV_err=63, lag = 10.64, lag_err = 0.875, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_17data/HST_STIS_spectra_mrk50.txt')
 
 qsos['NGC6814'] = quasars(name = 'NGC6814', z = 0.00521, MBH = 7.28, MBH_err = 0.14, L1350=41.105, L1350_err=0.021, SNR = 6, survey = 'HST', 
-                        VP_Woo15 = 4.2, VP_err_Woo15 = 0.8, fwhm_CIV=2651, fwhm_CIV_err=264,
+                        VP_Woo15 = 4.2, VP_err_Woo15 = 0.8, fwhm_CIV=2651, fwhm_CIV_err=264, lag = 6.64, lag_err = 0.885, 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_17data/HST_STIS_spectra_ngc6814.txt')
 
 qsos['SBS1116+583A'] = quasars(name = 'SBS1116+583A', z = 0.02787, MBH = 7.74, MBH_err = 0.22, L1350=42.867, L1350_err=0.005, SNR = 13, survey = 'HST', 
-                        VP_Woo15 = 1.1, VP_err_Woo15 = 0.5, fwhm_CIV=3253, fwhm_CIV_err=302,
+                        VP_Woo15 = 1.1, VP_err_Woo15 = 0.5, fwhm_CIV=3253, fwhm_CIV_err=302, lag = 2.31, lag_err = 0.5*(0.62+0.49), 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_17data/HST_STIS_spectra_sbs1116.txt')
 
 qsos['Zw229-015'] = quasars(name = 'Zw229-015', z = 0.02788, MBH = 6.99, MBH_err = 0.08, L1350=43.129, L1350_err=0.007, SNR = 17, survey = 'HST', 
-                        fwhm_CIV=2573, fwhm_CIV_err=71,
+                        fwhm_CIV=2573, fwhm_CIV_err=71, lag = 3.86, lag_err = 0.5*(0.69+0.9), 
                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_17data/HST_STIS_spectra_zw229.txt')
 
 
@@ -538,8 +540,8 @@ for i, q in enumerate(qsos.keys()):
     data_ivar[i, 2] = 0
     data[i, 3] = qsos[q].alpha
     data_ivar[i, 3] = np.nan
-    data[i, 4] = 5
-    data_ivar[i, 4] = np.nan
+    data[i, 4] = qsos[q].lag
+    data_ivar[i, 4] = qsos[q].lag_err**(-2)
     data[i, 5] = mean
     data_ivar[i, 5] = np.nan
     #data[i, 5] = qsos[q].fwhm_CIV

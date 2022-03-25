@@ -91,7 +91,7 @@ G17_4['E_logMBH'] = G17_4['MBH_err_p'] / (G17_4['MBH'] * np.log(10))
 G17_4['e_logMBH'] = G17_4['MBH_err_m'] / (G17_4['MBH'] * np.log(10))
 G17_4['survey'] = 'G17_SDSSRM_Hbeta'
 
-G17_5 = Table.read('../RM_black_hole_masses/Grier2017_table5_Halpha.txt', format = 'ascii')
+G17_5 = Table.read('../RM_black_hole_masses/Grier2017_table5_Halpha.txt', format = 'ascii', delimiter = '\t')
 G17_5['logMBH'] = np.log10(G17_5['MBH'] * 1e7)
 G17_5['E_logMBH'] = G17_5['MBH_err_p'] / (G17_5['MBH'] * np.log(10))
 G17_5['e_logMBH'] = G17_5['MBH_err_m'] / (G17_5['MBH'] * np.log(10))
@@ -405,15 +405,17 @@ for i in range(len(xx)):
     data_ivar[i, 2] = 0
     data[i, 3] = alpha
     data_ivar[i, 3] = np.nan
-    if xx['survey'][i] == 'G17_SDSSRM_Hbeta':
-        data[i, 4] = 1
-    elif xx['survey'][i] == 'G17_SDSSRM_Halpha':
-        data[i, 4] = 2
-    elif xx['survey'][i] == 'G19_SDSSRM_CIV':
-        data[i, 4] = 3
-    elif xx['survey'][i] == 'H20_SDSSRM_MgII':
-        data[i, 4] = 4
-    data_ivar[i, 4] = np.nan
+    # if xx['survey'][i] == 'G17_SDSSRM_Hbeta':
+    #     data[i, 4] = 1
+    # elif xx['survey'][i] == 'G17_SDSSRM_Halpha':
+    #     data[i, 4] = 2
+    # elif xx['survey'][i] == 'G19_SDSSRM_CIV':
+    #     data[i, 4] = 3
+    # elif xx['survey'][i] == 'H20_SDSSRM_MgII':
+    #     data[i, 4] = 4
+    # data_ivar[i, 4] = np.nan
+    data[i, 4] = xx['lag'][i]
+    data_ivar[i, 4] = (xx['lag_err'][i])**(-2)
     data[i, 5] = mean
     data_ivar[i, 5] = np.nan
     
@@ -468,10 +470,10 @@ f.close()
 
 fig, ax = plt.subplots(1, 2, figsize = (16, 7), sharey = True)
 plt.subplots_adjust(wspace = 0.05)
-hb = data[:, 4] == 1
+ha = xx['survey'] == 'G17_SDSSRM_Halpha'
+ax[0].errorbar(data[ha, 1], data[ha, 0], yerr = 1/np.sqrt(data_ivar[ha, 0]), fmt = 'o', color = colors[1], label = r'SDSS-RM: H$\alpha$ (${}$)'.format(len(data[ha, 0])))
+hb = xx['survey'] == 'G17_SDSSRM_Hbeta'
 ax[0].errorbar(data[hb, 1], data[hb, 0], yerr = 1/np.sqrt(data_ivar[hb, 0]), fmt = 'o', color = colors[0], label = r'SDSS-RM: H$\beta$ (${}$)'.format(len(data[hb, 0])))
-hb = data[:, 4] == 2
-ax[0].errorbar(data[hb, 1], data[hb, 0], yerr = 1/np.sqrt(data_ivar[hb, 0]), fmt = 'o', color = colors[1], label = r'SDSS-RM: H$\alpha$ (${}$)'.format(len(data[hb, 0])))
 #hb = xx['survey'] == 'G19_SDSSRM_CIV'
 #plt.errorbar(xx['ZSYS'][hb], xx['logMBH'][hb], yerr = [xx['E_logMBH'][hb], xx['e_logMBH'][hb]], fmt = 'o', color = colors[2], label = r'SDSS-RM: C\,{{\small IV}} (${}$)'.format(len(xx['ZSYS'][hb])))
 #hb = xx['survey'] == 'H20_SDSSRM_MgII'
@@ -480,16 +482,12 @@ ax[0].errorbar(data_hst[:, 1], data_hst[:, 0], yerr = 1/np.sqrt(data_ivar_hst[:,
 ax[0].set_xlabel(r'$z$', fontsize = fsize)
 ax[0].set_ylabel(r'$\log_{10}(M_\bullet/M_\odot)$', fontsize = fsize)
 
-hb = data_all[:, 4] == 1
-ha = data_all[:, 4] == 2
-c = data_all[:, 4] == 3
-m = data_all[:, 4] == 4
-h = data_all[:, 4] == 5
-ax[1].errorbar(data_all[hb, 6], data_all[hb, 0], yerr = 1/np.sqrt(data_ivar_all[hb, 0]), xerr = 1/np.sqrt(data_ivar_all[hb, 6]), color = colors[0], fmt = 'o', label = r'SDSS-RM: H$\beta$ (${}$)'.format(len(data_all[hb, 0])))
-ax[1].errorbar(data_all[ha, 6], data_all[ha, 0], yerr = 1/np.sqrt(data_ivar_all[ha, 0]), xerr = 1/np.sqrt(data_ivar_all[ha, 6]), color = colors[1], fmt = 'o', label = r'SDSS-RM: H$\alpha$ (${}$)'.format(len(data_all[ha, 0])))
+
+ax[1].errorbar(data[hb, 6], data[hb, 0], yerr = 1/np.sqrt(data_ivar[hb, 0]), xerr = 1/np.sqrt(data_ivar[hb, 6]), color = colors[0], fmt = 'o', label = r'SDSS-RM: H$\beta$ (${}$)'.format(len(data[hb, 0])))
+ax[1].errorbar(data[ha, 6], data[ha, 0], yerr = 1/np.sqrt(data_ivar[ha, 0]), xerr = 1/np.sqrt(data_ivar[ha, 6]), color = colors[1], fmt = 'o', label = r'SDSS-RM: H$\alpha$ (${}$)'.format(len(data[ha, 0])))
 #plt.errorbar(data_all[c, 6], data_all[c, 0], yerr = 1/np.sqrt(data_ivar_all[c, 0]), xerr = 1/np.sqrt(data_ivar_all[c, 6]), color = colors[2], fmt = 'o', label = r'SDSS-RM: C{\small IV}')
 #plt.errorbar(data_all[m, 6], data_all[m, 0], yerr = 1/np.sqrt(data_ivar_all[m, 0]), xerr = 1/np.sqrt(data_ivar_all[m, 6]), color = colors[3], fmt = 'o', label = r'SDSS-RM: Mg{\small II}')
-ax[1].errorbar(data_all[h, 6], data_all[h, 0], yerr = 1/np.sqrt(data_ivar_all[h, 0]), xerr = 1/np.sqrt(data_ivar_all[h, 6]), color = colors[5], fmt = 'o', label = r'HST: H$\beta$ (${}$)'.format(len(data_all[h, 1])))
+ax[1].errorbar(data_hst[:, 6], data_hst[:, 0], yerr = 1/np.sqrt(data_ivar_hst[:, 0]), xerr = 1/np.sqrt(data_ivar_hst[:, 6]), color = colors[5], fmt = 'o', label = r'HST: H$\beta$ (${}$)'.format(len(data_hst[:, 1])))
 #plt.errorbar(data_all[cuts_highz, 6], data_all[cuts_highz, 0], yerr = 1/np.sqrt(data_ivar_all[cuts_highz, 0]), xerr = 1/np.sqrt(data_ivar_all[cuts_highz, 6]), color= colors[4], fmt = 'o', label = r'X-Shooter: $z>6$')
 #plt.ylabel(r'$\log_{10}\,(M_\bullet/M_\odot)$', fontsize = fsize)
 ax[1].set_xlabel(r'$\log_{10}\,(L_{\rm bol} / \rm erg\,s^{-1})$', fontsize = fsize)
@@ -497,39 +495,40 @@ ax[0].tick_params(axis=u'both', direction='in', which='both')
 ax[1].tick_params(axis=u'both', direction='in', which='both')
 ax[1].legend(fontsize = 17, frameon = True, loc = 2)
 
-plt.savefig('plots/rm_training_sample.pdf', bbox_inches = 'tight')
+plt.savefig('../RM_black_hole_masses/plots/rm_training_sample.pdf', bbox_inches = 'tight')
 
 # -------------------------------------------------------------------------------
 # corner plot
 # -------------------------------------------------------------------------------
 
 #cuts_highz = (data_all[:, 1] > 5) #* (data_all[:, 6] < 47)
-hb = data_all[:, 4] == 1
-ha = data_all[:, 4] == 2
-c = data_all[:, 4] == 3
-m = data_all[:, 4] == 4
-h = data_all[:, 4] == 5
+# hb = data_all[:, 4] == 1
+# ha = data_all[:, 4] == 2
+# c = data_all[:, 4] == 3
+# m = data_all[:, 4] == 4
+# h = data_all[:, 4] == 5
+hb = xx['survey'] == 'G17_SDSSRM_Halpha'
 fig = plt.subplots(1, 1, figsize = (6, 6))
-plt.errorbar(data_all[hb, 6], data_all[hb, 0], yerr = 1/np.sqrt(data_ivar_all[hb, 0]), xerr = 1/np.sqrt(data_ivar_all[hb, 6]), color = colors[0], fmt = 'o', label = r'SDSS-RM: H$\beta$')
-plt.errorbar(data_all[ha, 6], data_all[ha, 0], yerr = 1/np.sqrt(data_ivar_all[ha, 0]), xerr = 1/np.sqrt(data_ivar_all[ha, 6]), color = colors[1], fmt = 'o', label = r'SDSS-RM: H$\alpha$')
+plt.errorbar(data[hb, 6], data[hb, 0], yerr = 1/np.sqrt(data_ivar[hb, 0]), xerr = 1/np.sqrt(data_ivar[hb, 6]), color = colors[0], fmt = 'o', label = r'SDSS-RM: H$\beta$')
+plt.errorbar(data[ha, 6], data[ha, 0], yerr = 1/np.sqrt(data_ivar[ha, 0]), xerr = 1/np.sqrt(data_ivar[ha, 6]), color = colors[1], fmt = 'o', label = r'SDSS-RM: H$\alpha$')
 #plt.errorbar(data_all[c, 6], data_all[c, 0], yerr = 1/np.sqrt(data_ivar_all[c, 0]), xerr = 1/np.sqrt(data_ivar_all[c, 6]), color = colors[2], fmt = 'o', label = r'SDSS-RM: C{\small IV}')
 #plt.errorbar(data_all[m, 6], data_all[m, 0], yerr = 1/np.sqrt(data_ivar_all[m, 0]), xerr = 1/np.sqrt(data_ivar_all[m, 6]), color = colors[3], fmt = 'o', label = r'SDSS-RM: Mg{\small II}')
-plt.errorbar(data_all[h, 6], data_all[h, 0], yerr = 1/np.sqrt(data_ivar_all[h, 0]), xerr = 1/np.sqrt(data_ivar_all[h, 6]), color = colors[5], fmt = 'o', label = r'HST: H$\beta$')
+plt.errorbar(data_hst[:, 6], data_hst[:, 0], yerr = 1/np.sqrt(data_ivar_hst[:, 0]), xerr = 1/np.sqrt(data_ivar_hst[:, 6]), color = colors[5], fmt = 'o', label = r'HST: H$\beta$')
 #plt.errorbar(data_all[cuts_highz, 6], data_all[cuts_highz, 0], yerr = 1/np.sqrt(data_ivar_all[cuts_highz, 0]), xerr = 1/np.sqrt(data_ivar_all[cuts_highz, 6]), color= colors[4], fmt = 'o', label = r'X-Shooter: $z>6$')
 plt.ylabel(r'$\log_{10}\,(M_\bullet/M_\odot)$', fontsize = fsize)
 plt.xlabel(r'$\log_{10}\,(L_{\rm bol} / \rm erg\,s^{-1})$', fontsize = fsize)
 plt.legend(fontsize = 16, frameon = True)
-plt.savefig('plots/MBHvsLbol.pdf', bbox_inches = 'tight')
+plt.savefig('../RM_black_hole_masses/plots/MBHvsLbol.pdf', bbox_inches = 'tight')
 plt.close()
 
 plt.hist(data_all[:, 6])
 plt.xlabel(r'$\log_{10}\,(L_{\rm bol} / \rm erg\,s^{-1})$', fontsize = fsize)
-plt.savefig('plots/Lbol_hist.pdf', bbox_inches = 'tight')
+plt.savefig('../RM_black_hole_masses/plots/Lbol_hist.pdf', bbox_inches = 'tight')
 plt.close()
 
 plt.hist(data_all[:, 0])
 plt.xlabel(r'$\log_{10}\,(M_\bullet/M_\odot)$', fontsize = fsize)
-plt.savefig('plots/MBH_hist.pdf', bbox_inches = 'tight')
+plt.savefig('../RM_black_hole_masses/plots/MBH_hist.pdf', bbox_inches = 'tight')
 plt.close()
 
 yy = np.nanmean(data_all, axis = 0)
@@ -537,7 +536,7 @@ fig = plt.subplots(1, 1, figsize = (14, 6))
 plt.plot(wave_grid[1:-1], yy[7:], color = 'k')
 plt.xlabel('rest-frame wavelength', fontsize = fsize)
 plt.ylabel('flux', fontsize = fsize)
-plt.savefig('plots/composite_spectrum_input_data.pdf', bbox_inches = 'tight')
+plt.savefig('../RM_black_hole_masses/plots/composite_spectrum_input_data.pdf', bbox_inches = 'tight')
 
 
 # f = open('data_HST_SDSS_bin2_5000.pickle', 'rb')
