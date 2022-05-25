@@ -43,9 +43,10 @@ colors = ["windows blue", "amber", "greyish", "faded green", "dusty purple", "pa
 colors = sns.xkcd_palette(colors)
 #colors = sns.color_palette("Blues")
 
-matplotlib.rcParams['ytick.labelsize'] = 24
-matplotlib.rcParams['xtick.labelsize'] = 24
+matplotlib.rcParams['ytick.labelsize'] = 22
+matplotlib.rcParams['xtick.labelsize'] = 22
 matplotlib.rc('text', usetex=True)
+fsize = 22
 
 colors_cont = ["black", "grey", "light grey"] 
 colors_cont = sns.xkcd_palette(colors_cont)
@@ -158,8 +159,10 @@ class quasars:
                 self.ivar = self.ivar[::-1]
             
         if self.L1350:
-            # Richards+2006b (ApJS, 166, 470)
-            self.log_Lbol = np.log10(3.81) + self.L1350
+            # Richards+2006b (ApJS, 166, 470); Vestergaard & Osmer 2006: A = 4.30 +- 0.46
+            self.log_Lbol = np.log10(4.30) + self.L1350
+            #err_A = 0.46 / 4.3 / np.log(10)
+            #self.log_Lbol_err = np.sqrt(self.L1350_err**2 + err_A**2)
             self.log_Lbol_err = self.L1350_err
         
         # systematic uncertainty of 0.37 dex for SE derived BH masses -- Park+ 2017
@@ -201,7 +204,7 @@ qsos['3C120'] = quasars(name = '3C120', z = 0.03301, MBH = 7.80, MBH_err = 0.04,
 
 # qsos['3C390'] = quasars(name = '3C390', z = 0.05610, MBH = 8.43, MBH_err = 0.10, L1350=43.869, L1350_err=0.003, SNR = 18, survey = 'HST', # should be: 8.38
 #                         VP_Woo15 = 278.1, VP_err_Woo15 = (24.4+31.6)/2, fwhm_CIV=5645, fwhm_CIV_err=202, lag = 23.6, lag_err = 6.45, 
-#                             HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_3C390.3.txt')
+#                         HST_file = '/Users/eilers/Dropbox/projects/RM_black_hole_masses/specdata/Park_13data/HST_IUE_spectra_3C390.3.txt')
 
 qsos['Ark120'] = quasars(name = 'Ark120', z = 0.03230, MBH = 8.14, MBH_err = 0.06, L1350=44.400, L1350_err=0.005, SNR = 17, survey = 'HST', 
                         VP_Woo15 = 23.7, VP_err_Woo15 = (3.0+4.2)/2., fwhm_CIV=3471, fwhm_CIV_err=108, lag = 39.05, lag_err = 4.57, 
@@ -325,7 +328,7 @@ qsos['Zw229-015'] = quasars(name = 'Zw229-015', z = 0.02788, MBH = 6.99, MBH_err
 
 
 
-# -------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------'''
 # virial factor
 # -------------------------------------------------------------------------------
 
@@ -414,7 +417,35 @@ def PowerLaw(F0, alpha, wl):
 
 def lnlike(pars, flux, ivar, wl):
     F0, alpha = pars
-    return np.sum((flux - PowerLaw(F0, alpha, wl))**2 * ivar)
+    return np.sum(0.5 * (flux - PowerLaw(F0, alpha, wl))**2 * ivar)
+
+def lnlike2(pars, flux, ivar, wl):
+    F0, alpha = pars
+    return np.sum(-0.5 * (flux - PowerLaw(F0, alpha, wl))**2 * ivar)
+
+def lnprob(theta, flux, ivar, wl, coef_min, coef_max):
+    lp = lnprior(theta, coef_min, coef_max)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + lnlike2(theta, flux, ivar, wl) 
+
+def lnprior(theta, coef_min, coef_max):
+    F0, alpha  = theta
+    if coef_min[0] < F0 < coef_max[0] and coef_min[1] < alpha < coef_max[1]:
+        return 0.0
+    return -np.inf
+
+def GetInitialPositions(nwalkers, coef_min, coef_max, ndim):	
+    p0 = np.random.uniform(size = (nwalkers, ndim))
+    for i in range(0, ndim):
+        p0[:, i] = coef_min[i] + p0[:, i] * (coef_max[i] - coef_min[i])
+    return p0
+
+def GetInitialPositionsBalls(nwalkers, best_guess, ndim):	
+    p0 = np.random.normal(size = (nwalkers, ndim))
+    for i in range(0, ndim):
+        p0[:, i] = best_guess[i] + p0[:, i] * 0.1 * best_guess[i]
+    return p0
 
 # -------------------------------------------------------------------------------
 # mask absorption lines
@@ -433,8 +464,10 @@ for i, q in enumerate(qsos.keys()):
 for i, q in enumerate(qsos.keys()):
     qsos[q].cont = np.zeros_like(qsos[q].flux)
     nfit = len(qsos[q].flux)
-    if qsos[q].name == '3C390' or qsos[q].name == 'Ark120' or qsos[q].name == 'Fairall9' or qsos[q].name == 'Mrk279' or qsos[q].name == 'Mrk290' or qsos[q].name == 'Mrk335' or qsos[q].name == 'Mrk817' or qsos[q].name == 'NGC4593' or qsos[q].name == 'NGC7469' or qsos[q].name == 'PG0804+761' or qsos[q].name == 'PG1226+023' or qsos[q].name == 'PG1307+085' or qsos[q].name == 'PG1613+658' or qsos[q].name == 'PG2130+099':
+    if qsos[q].name == 'Ark120' or qsos[q].name == 'Fairall9' or qsos[q].name == 'Mrk279' or qsos[q].name == 'Mrk290' or qsos[q].name == 'Mrk335' or qsos[q].name == 'Mrk817' or qsos[q].name == 'NGC4593' or qsos[q].name == 'NGC7469' or qsos[q].name == 'PG0804+761' or qsos[q].name == 'PG1226+023' or qsos[q].name == 'PG1307+085' or qsos[q].name == 'PG1613+658' or qsos[q].name == 'PG2130+099':
         deltapix2 = 17
+    elif qsos[q].name == '3C390':
+        deltapix2 = 10
     elif qsos[q].name == 'Mrk509' or qsos[q].name == 'NGC3516' or qsos[q].name == 'NGC3783' or qsos[q].name == 'NGC5548' or qsos[q].name == 'PG0052+251' or qsos[q].name == 'PG0953+414' or qsos[q].name == 'NGC4051':
         deltapix2 = 40
     elif qsos[q].name == 'PG0026+129' or qsos[q].name == 'PG1426+015' or qsos[q].name == 'Mrk50' or qsos[q].name == 'NGC6814' or qsos[q].name == 'SBS1116+583A': # or qsos[q].name == 'Zw229-015':
@@ -453,8 +486,8 @@ for i, q in enumerate(qsos.keys()):
     qsos[q].wave_orig = qsos[q].wave_rest.copy()
     qsos[q].flux = qsos[q].flux[~xx.mask]
     qsos[q].ivar = qsos[q].ivar[~xx.mask]
-    qsos[q].wave_rest = qsos[q].wave_rest[~xx.mask]    
-
+    qsos[q].wave_rest = qsos[q].wave_rest[~xx.mask]  
+    
 # normalize to "something like the mean continuum"
 for i, q in enumerate(qsos.keys()):
 
@@ -491,16 +524,47 @@ for i, q in enumerate(qsos.keys()):
     good_indices[(qsos[q].wave_rest > 3750) * (qsos[q].wave_rest < 3850)] = True
     good_indices[(qsos[q].wave_rest > 3900) * (qsos[q].wave_rest < 4300)] = True
     good_indices[(qsos[q].wave_rest > 4400) * (qsos[q].wave_rest < 4800)] = True
+    good_indices[np.logical_or(np.isnan(qsos[q].ivar), np.isnan(qsos[q].flux))] = False
     
     x0 = np.array([1, -1])
-    bnds = [(0, None), (-4, 0)]
+    bnds = [(0, None), (-4, 1)]
     res = minimize(lnlike, x0 = x0, args = (qsos[q].flux[good_indices], qsos[q].ivar[good_indices], qsos[q].wave_rest[good_indices]), bounds = bnds)
     F0, qsos[q].alpha = res.x
+    print(res.x)
+    
+    nwalkers = 100
+    coef_min = np.array([0, -4])
+    coef_max = np.array([1e6, 2])
+    ndim = coef_min.shape[0]
+    nsteps = 500
+    pos = GetInitialPositionsBalls(nwalkers, res.x, ndim)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(qsos[q].flux[good_indices], qsos[q].ivar[good_indices], qsos[q].wave_rest[good_indices], coef_min, coef_max))
+    sampler.run_mcmc(pos, nsteps)
+    samples = sampler.chain[:, 100:, :].reshape((-1, ndim))
+    qsos[q].F0, qsos[q].alpha =  np.mean(samples, axis = 0) 
+    qsos[q].F0_err, qsos[q].alpha_err = np.std(samples, axis = 0) # 0.5 * (np.percentile(samples, 84, axis = 0) - np.percentile(samples, 16, axis = 0))
+
+    # fig, axes = plt.subplots(ndim, 1, sharex=True, figsize=(8, 10)) 
+    # for l in range(0, ndim):
+    #     axes[l].plot(sampler.chain[:, :, l].T, color="k", alpha=0.4)
+    #     axes[l].tick_params(axis=u'both', direction='in', which='both')               
+    # axes[-1].set_xlabel('step number') 
+            
+    # fig = corner.corner(samples)
+    # fig.savefig('plots/mcmc/{}_corner.pdf'.format(i))  
+    # plt.close()   
+    
     # normalization 
-    mean = PowerLaw(F0, qsos[q].alpha, 2500)
-    print(i, mean)
-    qsos[q].flux_norm = qsos[q].flux / mean
-    qsos[q].ivar_norm = qsos[q].ivar * mean**2
+    qsos[q].mean = PowerLaw(qsos[q].F0, qsos[q].alpha, 2500)
+    print(i, qsos[q].mean)
+    qsos[q].flux_norm = qsos[q].flux / qsos[q].mean
+    qsos[q].ivar_norm = qsos[q].ivar * qsos[q].mean**2
+    
+    qsos[q].L_edd = 1.26e38 * 10**(qsos[q].MBH)
+    qsos[q].L_edd_err = 1.26e38 * 10**(qsos[q].MBH) * np.log(10) * qsos[q].MBH_err
+    lambda_edd = 10**(qsos[q].log_Lbol) / qsos[q].L_edd 
+    lambda_edd_var = (qsos[q].log_Lbol_err * 10**qsos[q].log_Lbol * np.log(10) / qsos[q].L_edd)**2 + (10**qsos[q].log_Lbol * qsos[q].L_edd_err / qsos[q].L_edd**2)**2
+    print('lambda: ', lambda_edd, np.sqrt(lambda_edd_var))
     
     # -------------------------------------------------------------------------------
     # normalize to unity at ~1280 A
@@ -539,11 +603,11 @@ for i, q in enumerate(qsos.keys()):
     data[i, 2] = qsos[q].SNR
     data_ivar[i, 2] = 0
     data[i, 3] = qsos[q].alpha
-    data_ivar[i, 3] = np.nan
+    data_ivar[i, 3] = (qsos[q].alpha_err)**(-2)
     data[i, 4] = qsos[q].lag
     data_ivar[i, 4] = qsos[q].lag_err**(-2)
-    data[i, 5] = mean
-    data_ivar[i, 5] = np.nan
+    data[i, 5] = lambda_edd
+    data_ivar[i, 5] = 1./lambda_edd_var
     #data[i, 5] = qsos[q].fwhm_CIV
     #data_ivar[i, 5] = 1 / (qsos[q].fwhm_CIV_err**2)
     data[i, 6] = qsos[q].log_Lbol
@@ -555,20 +619,57 @@ for i, q in enumerate(qsos.keys()):
     #     data[i, 6] = qsos[q].log_L1450
     #     data_ivar[i, 6] = 1 / (qsos[q].log_L1450_err**2 )       
 
-    fig = plt.figure(figsize = (12, 6))
-    plt.plot(qsos[q].wave_orig, qsos[q].flux_orig / mean, color = '0.9', label = r'original data: {}, {}, $z={}$, SNR=${}$, $\log M_\bullet = {}$'.format(i, qsos[q].name, qsos[q].z, qsos[q].SNR, np.round(qsos[q].MBH, 2)))
-    plt.plot(qsos[q].wave_orig, qsos[q].cont / mean, color = 'r', zorder = 10, label = 'spline fit', lw = 2)
-    plt.plot(qsos[q].wave_stack, data[i, 6:], color = 'k', label = 'input data', zorder  = 12)
-    plt.plot(qsos[q].wave_stack, 1/np.sqrt(data_ivar[i, 6:]), color = '0.7', label = 'input noise')
-    plt.plot(qsos[q].wave_stack, PowerLaw(F0, qsos[q].alpha, qsos[q].wave_stack) / mean, label = r'power law, $\alpha={}$'.format(round(qsos[q].alpha, 2)), lw = 1, linestyle = '--', color = 'blue')
-    plt.ylim(-1, 12)
-    plt.xlim(1190, 5000.1)
-    for l in list(lines):
-        plt.axvline(l)
-    #plt.axhline(mean, color = colors[5], lw = 2)
-    plt.legend(fontsize = 16)
-    plt.savefig('../RM_black_hole_masses/BOSS/plots/spectrum_HST_{}.pdf'.format(i))
-    plt.show()
+    # fig = plt.figure(figsize = (12, 6))
+    # plt.plot(qsos[q].wave_orig, qsos[q].flux_orig / mean, color = '0.9', label = r'original data: {}, {}, $z={}$, SNR=${}$, $\log M_\bullet = {}$'.format(i, qsos[q].name, qsos[q].z, qsos[q].SNR, np.round(qsos[q].MBH, 2)))
+    # plt.plot(qsos[q].wave_orig, qsos[q].cont / mean, color = 'r', zorder = 10, label = 'spline fit', lw = 2)
+    # plt.plot(qsos[q].wave_stack, data[i, 6:], color = 'k', label = 'input data', zorder  = 12)
+    # plt.plot(qsos[q].wave_stack, 1/np.sqrt(data_ivar[i, 6:]), color = '0.7', label = 'input noise')
+    # plt.plot(qsos[q].wave_stack, PowerLaw(F0, qsos[q].alpha, qsos[q].wave_stack) / mean, label = r'power law, $\alpha={}\pm{}$'.format(round(qsos[q].alpha, 2), round(qsos[q].alpha_err, 2)), lw = 1, linestyle = '--', color = 'blue')
+    # plt.ylim(-1, 25)
+    # plt.xlim(1190, 5000.1)
+    # for l in list(lines):
+    #     plt.axvline(l)
+    # #plt.axhline(mean, color = colors[5], lw = 2)
+    # plt.legend(fontsize = 16)
+    # #plt.savefig('../RM_black_hole_masses/BOSS/plots/spectrum_HST_{}.pdf'.format(i))
+    # plt.savefig('plots/mcmc/spectrum_HST_{}.pdf'.format(i))
+    # plt.show()
+
+# normalize to "something like the mean continuum"
+for i, q in enumerate(qsos.keys()):
+    
+    if i == 0:
+       fig, ax = plt.subplots(16, 1, figsize=(15, 22), sharex = True)
+       plt.subplots_adjust(hspace = 0.0) 
+    if i == 16:
+       fig, ax = plt.subplots(15, 1, figsize=(15, 22), sharex = True)
+       plt.subplots_adjust(hspace = 0.0) 
+    if i < 16:
+          j = i
+    elif i >= 16:
+        j = i%16
+    cuts = (qsos[q].wave_orig > 1221) * (qsos[q].wave_orig < 5000)
+    maxx = np.max(qsos[q].flux_orig[cuts] / qsos[q].mean)
+    ax[j].plot(qsos[q].wave_orig, qsos[q].flux_orig / qsos[q].mean, color = '0.8')
+    ax[j].plot(qsos[q].wave_stack, data[i, 6:], color = 'k', label = r'{}, $z={}$, $\log_{{10}}(M_\bullet/M_\odot) = {}$'.format(qsos[q].name, np.round(qsos[q].z, 3), np.round(qsos[q].MBH, 2)), zorder  = 12) 
+    ax[j].plot(qsos[q].wave_stack, 1/np.sqrt(data_ivar[i, 6:]), color = '0.7')
+    ax[j].plot(qsos[q].wave_stack, PowerLaw(qsos[q].F0, qsos[q].alpha, qsos[q].wave_stack) / qsos[q].mean, lw = 1, linestyle = '--', color = colors[5])    
+    ax[j].set_xlim(1221, 5000)
+    ax[j].set_ylim(0, 1.1*maxx)
+    ax[j].legend(fontsize = 16)
+    
+    if i == 8:
+        ax[j].set_ylabel(r'normalized flux', fontsize = fsize)
+    if i == 23:
+        ax[j].set_ylabel(r'normalized flux', fontsize = fsize)
+    
+    if i == 15:
+        ax[-1].set_xlabel(r'rest-frame wavelength [{\AA}]', fontsize = fsize)
+        plt.savefig('plots/spectra1.pdf', bbox_inches = 'tight')
+        plt.close()
+    if i == 30:
+        ax[-1].set_xlabel(r'rest-frame wavelength [{\AA}]', fontsize = fsize)
+        plt.savefig('plots/spectra2.pdf', bbox_inches = 'tight')
     
 # -------------------------------------------------------------------------------
 # add missing data by setting missing values to composite spectrum?

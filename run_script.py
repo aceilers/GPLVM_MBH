@@ -22,7 +22,7 @@ def execute(process):
 
 def main():
     N = 10
-    idx = np.linspace(0, 76, N).astype('int') 
+    idx = np.linspace(0, 31, N).astype('int') 
     cmd = 'script_sgplvm.py'
     cmd += ' {} {}'
     cmd = [cmd.format(q0, q1) for q0, q1 in zip(idx[:-1], idx[1:])]

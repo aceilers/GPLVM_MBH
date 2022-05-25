@@ -143,7 +143,7 @@ def cygnet_likelihood_d_worker_new(task):
     good_stars = np.isfinite(X) * np.isfinite(X_var)
     if np.sum(good_stars) > 0:
         thiskernel = kernel1[good_stars, :][:, good_stars]
-        K1C = thiskernel + np.diag(X_var[good_stars]) * (1+beta)
+        K1C = thiskernel + np.diag(X_var[good_stars]) #* (1+beta)
         thisfactor = cho_factor(K1C, overwrite_a = True)
         thislogdet = 2. * np.sum(np.log(np.diag(thisfactor[0])))
         Lx = LxOrLy(thislogdet, thisfactor, X[good_stars])
@@ -169,8 +169,8 @@ def cygnet_likelihood_l_worker_new(task):
     gradLy = np.zeros_like(Z)
     gradLy[good_stars, :] = dLdZ(Y[good_stars], Z[good_stars, :], thisfactor, thiskernel, By)            
     dLdrbf = dLdhyper(Y[good_stars], Z[good_stars, :], Ay, thiskernel, thisfactor)
-    dLdband = dLdhyper_band(Y[good_stars], Z[good_stars, :], thiskernel, thisfactor)
-    return Ly, gradLy, dLdrbf, dLdband
+    #dLdband = dLdhyper_band(Y[good_stars], Z[good_stars, :], thiskernel, thisfactor)
+    return Ly, gradLy, dLdrbf#, dLdband
 
 
 def LxOrLy(log_K_det, factor, data):  
@@ -186,15 +186,15 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, beta = 0, X_mask = None, Y_mask = N
         
     Z = np.reshape(pars[:(N*Q)], (N, Q)) 
     Bx = 1.
-    By = np.ones(L)
+    By = 1. #np.ones(L)
     
-    Ax = pars[-L-1]
-    Ay = pars[-L:]
+    Ax = pars[-L-1] #[-L-1]
+    Ay = pars[-L:] #[-L:]
     #Ax = pars[-2*L-2]
     #Bx = pars[-2*L-1]
     #Ay = pars[-2*L:-L]
     #By = pars[-L:]
-    #print(Ax, Bx, Ay, By)
+    # print(Ax, Bx, Ay, By)
     
     # fixed for all d
     kernel1 = kernelRBF(Z, Ax, Bx)
@@ -208,7 +208,7 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, beta = 0, X_mask = None, Y_mask = N
     gradLx, gradLy = np.zeros_like(Z), np.zeros_like(Z)
     # gradLx_rbf, gradLx_band = 0, 0 #np.zeros_like(Ax), np.zeros_like(Bx)
     # gradLy_rbf, gradLy_band = np.zeros_like(Ay), np.zeros_like(By)
-    gradLx_rbf = 0 
+    gradLx_rbf = 0. 
     gradLy_rbf = np.zeros_like(Ay)
         
     tasks = [(X[:, d], X_var[:, d], Z, kernel1, Bx, Ax, beta) for d in range(D)]        
@@ -218,11 +218,11 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, beta = 0, X_mask = None, Y_mask = N
         gradLx_rbf += result[2]
         #gradLx_band += result[3]
         
-    tasks = [(Y[:, l], Y_var[:, l], Z, By[l], Ay[l]) for l in range(L)]    
+    tasks = [(Y[:, l], Y_var[:, l], Z, By, Ay[l]) for l in range(L)]  # By[l], Ay[l]   
     for i, result in enumerate(map(cygnet_likelihood_l_worker_new, tasks)):
         Ly += result[0]
         gradLy += result[1]   
-        gradLy_rbf[i] += result[2]
+        gradLy_rbf[i] += result[2] # gradLy_rbf[i] += result[2]
         #gradLy_band[i] += result[3]
         
     Lz = -0.5 * np.sum(Z[:, 1:]**2) # - 0.5 * np.sum((Z[:, 0] - Y[:, 0])**2 / Y_var[:, 0])
@@ -233,7 +233,7 @@ def lnL(pars, X, Y, Z_initial, X_var, Y_var, beta = 0, X_mask = None, Y_mask = N
     gradL = np.hstack((gradLZ, gradLx_rbf, gradLy_rbf))
     #gradL = np.hstack((gradLZ, gradLx_rbf, gradLx_band, gradLy_rbf, gradLy_band))
     assert gradL.shape == pars.shape
-    #print(-2.*Lx, -2.*Ly, -2.*Lz, -2.*L)
+    # print(-2.*Lx, -2.*Ly, -2.*Lz, -2.*L)
     
     return -2.*L, -2.*gradL
 
@@ -317,15 +317,20 @@ def mean_var(Z, Zj, data, data_var, A, B, data_mask = None):
         return np.array(mean_j), np.array(var_j), k_Z_zj
     
 
-def lnL_znew(pars, X_new_j, X_var_new_j, Z, X, X_var, A, B, X_mask = None, X_mask_new = None): 
+def lnL_znew(pars, X_new_j, X_var_new_j, Y_new_j, Y_var_new_j, Z, X, X_var, Y, Y_var, Ax, Bx, Ay, By, X_mask = None, X_mask_new = None, Y_mask = None, Y_mask_new = None): 
     
     if X_mask is None:
         X_mask = np.ones_like(X).astype(bool)
     if X_mask_new is None:
         X_mask_new = np.ones_like(X_new_j).astype(bool) 
-        
+    if Y_mask is None:
+        Y_mask = np.ones_like(Y).astype(bool)
+    if Y_mask_new is None:
+        Y_mask_new = np.ones_like(Y_new_j).astype(bool) 
+                
     Zj = pars
     D = X_new_j.shape[0]  
+    L = Y_new_j.shape[0]
     
     like = 0.
     gradL = 0.
@@ -339,16 +344,31 @@ def lnL_znew(pars, X_new_j, X_var_new_j, Z, X, X_var, A, B, X_mask = None, X_mas
         if X_mask_new[d] == True:
             good_stars = X_mask[:, d]
             Nd = np.sum(good_stars)
-            mean, var, k_Z_zj, factor = mean_var(Z[good_stars, :], Zj, X[good_stars, d], X_var[good_stars, d], A, B) # used to be rbf[d]
+            mean, var, k_Z_zj, factor = mean_var(Z[good_stars, :], Zj, X[good_stars, d], X_var[good_stars, d], Ax, Bx) # used to be rbf[d]
             assert var > 0.
             
             like += -0.5 * np.dot((X_new_j[d] - mean).T, (X_new_j[d] - mean)) / \
                               (var + X_var_new_j[d]) - 0.5 * np.log(var + X_var_new_j[d]) - 0.5 * Nd * np.log(2*np.pi)
             
             dLdmu, dLdsigma2 = dLdmusigma2(X_new_j[d], mean, (var + X_var_new_j[d]))
-            dmudZ, dsigma2dZ = dmusigma2dZ(X[good_stars, d], factor, Z[good_stars, :], Zj, k_Z_zj, B)        
+            dmudZ, dsigma2dZ = dmusigma2dZ(X[good_stars, d], factor, Z[good_stars, :], Zj, k_Z_zj, Bx)        
             #gradL += np.dot(dLdmu, dmudZ) + np.dot(dLdsigma2, dsigma2dZ)  # changed this on Oct 29, 2021
             gradL += dLdmu * dmudZ + dLdsigma2 * dsigma2dZ
+    
+    for l in range(L):
+        if Y_mask_new[l] == True:
+            good_stars = Y_mask[:, l]
+            Nl = np.sum(good_stars)
+            mean, var, k_Z_zj, factor = mean_var(Z[good_stars, :], Zj, Y[good_stars, l], Y_var[good_stars, l], Ay[l], By) 
+            assert var > 0.            
+            like += -0.5 * np.dot((Y_new_j[l] - mean).T, (Y_new_j[l] - mean)) / \
+                              (var + Y_var_new_j[l]) - 0.5 * np.log(var + Y_var_new_j[l]) - 0.5 * Nl * np.log(2*np.pi)  
+                              
+            dLdmu, dLdsigma2 = dLdmusigma2(Y_new_j[l], mean, (var + Y_var_new_j[l]))
+            dmudZ, dsigma2dZ = dmusigma2dZ(Y[good_stars, l], factor, Z[good_stars, :], Zj, k_Z_zj, By)        
+            #gradL += np.dot(dLdmu, dmudZ) + np.dot(dLdsigma2, dsigma2dZ)  # changed this on Oct 29, 2021
+            gradL += dLdmu * dmudZ + dLdsigma2 * dsigma2dZ
+            
     return -2.*like, -2.*gradL
 
 
@@ -387,15 +407,15 @@ def dmusigma2dZ(data, factor, Z, Zj, k_Z_zj, band):
     return dmudZ, dsigma2dZ
 
 
-def predictY(X_new, X_var_new, X, X_var, Y, Y_var, Z_final, hyper_params, y0, z0, name, X_mask = None, Y_mask = None, X_mask_new = None):
+def predictY(X_new, X_var_new, Y_new, Y_var_new, X, X_var, Y, Y_var, Z_final, hyper_params, y0, z0, name, X_mask = None, Y_mask = None, X_mask_new = None, Y_mask_new = None):
     
     # Q = Z_final.shape[1]
     
     Ax, Ay = hyper_params
-    Bx = 1
+    Bx, By = 1, 1
     
     # get new set of latent parameters for the new object given the new spectrum!        
-    res = op.minimize(lnL_znew, x0 = z0, args = (X_new, X_var_new, Z_final, X, X_var, Ax, Bx, X_mask, X_mask_new), method = 'L-BFGS-B', jac = True, 
+    res = op.minimize(lnL_znew, x0 = z0, args = (X_new, X_var_new, Y_new, Y_var_new, Z_final, X, X_var, Y, Y_var, Ax, Bx, Ay, By, X_mask, X_mask_new, Y_mask, Y_mask_new), method = 'L-BFGS-B', jac = True, 
                    options={'gtol':1e-12, 'ftol':1e-12})   
     Z_opt = res.x
     success_z = res.success
