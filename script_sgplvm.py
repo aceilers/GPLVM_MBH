@@ -49,10 +49,10 @@ np.random.seed(42)
 # import loop parameters
 # -------------------------------------------------------------------------------
 
-Q_start = int(sys.argv[-2])
-Q_end = int(sys.argv[-1])
-print(Q_start, Q_end)
-#Q_start, Q_end = 4, 5
+#Q_start = int(sys.argv[-2])
+#Q_end = int(sys.argv[-1])
+#print(Q_start, Q_end)
+Q_start, Q_end = 26, 27
 
 # -------------------------------------------------------------------------------
 # parameters
@@ -75,7 +75,7 @@ plot_limits['$\log_{10}\,L_{\\rm bol}$'] = (40, 50)
 # first entries: black hole masses, z, SNR, BAL, survey, normalization mean, Lbol
 # remaining entries: spectra
 #f = open('../RM_black_hole_masses/data_HST_SDSS_1220_5000_2A.pickle', 'rb') 
-f = open('data_HST_1220_5000_2A.pickle', 'rb') 
+f = open('../RM_black_hole_masses/data_HST_1220_5000_2A.pickle', 'rb') 
 # f = open('data_HST_SDSS_flexwave2_1220_5000.pickle', 'rb')
 data, data_ivar = pickle.load(f)
 f.close()
@@ -310,114 +310,115 @@ for qq in range(Q_start, Q_end):
     # prediction for new test object
     # -------------------------------------------------------------------------------
 
-    # fig, ax = plt.subplots(5, 1, figsize = (15, 20), sharex = True, sharey = True)
-    # plt.subplots_adjust(hspace = 0)
+    '''fig, ax = plt.subplots(4, 1, figsize = (15, 16), sharex = True, sharey = True)
+    plt.subplots_adjust(hspace = 0)
     
-    # for p in range(5):
-    #     Y_new_test = np.zeros((np.sum(ind_test)))
-    #     Y_new_var_test = np.zeros((np.sum(ind_test)))
-    #     Z_new_test = np.zeros((np.sum(ind_test), Q))
-    #     N_new = np.sum(ind_test) 
+    for p in range(4):
+        Y_new_test = np.zeros((np.sum(ind_test)))
+        Y_new_var_test = np.zeros((np.sum(ind_test)))
+        Z_new_test = np.zeros((np.sum(ind_test), Q))
+        N_new = np.sum(ind_test) 
         
-    #     X_new = X[ind_test, :]
-    #     X_var_new = X_var[ind_test, :]
-    #     Y_new = Y[ind_test, :]
-    #     Y_var_new = Y_var[ind_test, :]
+        X_new = X[ind_test, :]
+        X_var_new = X_var[ind_test, :]
+        Y_new = Y[ind_test, :]
+        Y_var_new = Y_var[ind_test, :]
         
-    #     X_mask_new = np.ones_like(X_new).astype(bool)
-    #     X_mask_new[np.isnan(X_new)] = False
+        X_mask_new = np.ones_like(X_new).astype(bool)
+        X_mask_new[np.isnan(X_new)] = False
         
-    #     # predict black hole mass!
-    #     Y_mask_new = np.ones_like(Y_new).astype(bool)
-    #     Y_mask_new[:, 0] = False # 0th entry is black hole mass! 
-    #     # Y_mask_new[:, 1] = False # 0th entry is black hole mass! 
-    #     # Y_mask_new[:, 2] = False # 0th entry is black hole mass! 
+        # predict black hole mass!
+        Y_mask_new = np.ones_like(Y_new).astype(bool)
+        Y_mask_new[:, 0] = False # 0th entry is black hole mass! 
+        Y_mask_new[:, 1] = False # 0th entry is black hole mass! 
+        Y_mask_new[:, 2] = False # 0th entry is black hole mass! 
         
-    #     chi2 = Chi2_Matrix(X_input, 1./X_var_input, X_new, 1./X_var_new)
-    #     all_NN = np.zeros((np.sum(ind_test), L))
+        chi2 = Chi2_Matrix(X_input, 1./X_var_input, X_new, 1./X_var_new)
+        all_NN = np.zeros((np.sum(ind_test), L))
         
-    #     all_chis = []
+        all_chis = []
         
-    #     min_waves, max_waves = 1220, 5000.1 
-    #     waves = np.arange(min_waves, max_waves, 2)[1:-1]    
+        min_waves, max_waves = 1220, 5000.1 
+        waves = np.arange(min_waves, max_waves, 2)[1:-1]    
         
-    #     for n in range(N_new):
+        for n in range(N_new):
         
-    #         mask_prediction = np.ones_like(X_mask_new[n, :], dtype= bool)
-    #         if  p == 1:
-    #             mask_prediction[waves > 2500] = False
-    #         elif  p == 2:
-    #             mask_prediction[np.logical_or(waves < 2500, waves > 3000)] = False
-    #         elif  p == 3:
-    #             mask_prediction[np.logical_or(waves < 1800, waves > 2000)] = False
-    #         elif  p == 4:
-    #             mask_prediction[np.logical_or(waves < 4000, waves > 5000)] = False
-    #         #elif  p == 5:
-    #         #    mask_prediction[np.logical_or(waves < 1800, waves > 2000)] = False
-    #         X_mask_new[n, :] *= mask_prediction
+            mask_prediction = np.ones_like(X_mask_new[n, :], dtype= bool)
+            if  p == 1:
+                mask_prediction[waves > 2500] = False
+            elif  p == 2:
+                mask_prediction[np.logical_or(waves < 2500, waves > 3000)] = False
+            elif  p == 3:
+                #mask_prediction[np.logical_or(waves < 1800, waves > 2000)] = False
+                mask_prediction[np.logical_or(waves < 3000, waves > 3500)] = False
+            elif  p == 4:
+                mask_prediction[np.logical_or(waves < 4000, waves > 5000)] = False
+            #elif  p == 5:
+            #    mask_prediction[np.logical_or(waves < 1800, waves > 2000)] = False
+            X_mask_new[n, :] *= mask_prediction
             
-    #         # starting_guess
-    #         y0, index_n = NN(n, chi2, Y_input)
-    #         z0 = Z_final[index_n, :]
-    #         all_NN[n, :] = y0
-    #         print('test!!!', y0, Y_new)
+            # starting_guess
+            y0, index_n = NN(n, chi2, Y_input)
+            z0 = Z_final[index_n, :]
+            all_NN[n, :] = y0
+            print('test!!!', y0, Y_new)
             
-    #         #Z_opt_n, success_z, samples = predictY(X_new[n, :], X_var_new[n, :], X_input, X_var_input, Y_input, Y_var_input, Z_final, hyper_params, y0, z0, qq, name, X_mask, Y_mask, X_mask_new[n, :])
-    #         Z_opt_n, success_z = predictY(X_new[n, :], X_var_new[n, :], Y_new[n, :], Y_var_new[n, :], X_input, X_var_input, Y_input, Y_var_input, Z_final, hyper_params, y0, z0, name, X_mask, Y_mask, X_mask_new[n, :], Y_mask_new[n, :])
+            #Z_opt_n, success_z, samples = predictY(X_new[n, :], X_var_new[n, :], X_input, X_var_input, Y_input, Y_var_input, Z_final, hyper_params, y0, z0, qq, name, X_mask, Y_mask, X_mask_new[n, :])
+            Z_opt_n, success_z = predictY(X_new[n, :], X_var_new[n, :], Y_new[n, :], Y_var_new[n, :], X_input, X_var_input, Y_input, Y_var_input, Z_final, hyper_params, y0, z0, name, X_mask, Y_mask, X_mask_new[n, :], Y_mask_new[n, :])
             
-    #         #Z25, Z16, Z_new_n, Z84, Z975 = np.percentile(samples, (2.5, 16, 50, 84, 97.5), axis = 0)    
-    #         print('optimized latents: ', Z_opt_n)
-    #         #print('sampled latents: ', Z_new_n)
+            #Z25, Z16, Z_new_n, Z84, Z975 = np.percentile(samples, (2.5, 16, 50, 84, 97.5), axis = 0)    
+            print('optimized latents: ', Z_opt_n)
+            #print('sampled latents: ', Z_new_n)
             
-    #         # # corner and steps plot
-    #         # fig, axes = plt.subplots(ndim, 1, sharex=True, figsize=(8, 20)) 
-    #         # for l in range(0, ndim):
-    #         #     axes[l].plot(sampler.chain[:, :, l].T, color="k", alpha=0.4)
-    #         #     axes[l].tick_params(axis=u'both', direction='in', which='both')               
-    #         # axes[-1].set_xlabel('step number') 
-    #         # plt.savefig('/Users/eilers/Dropbox/projects/RM_black_hole_masses/plots/new/corners/steps_{}_{}.pdf'.format(i, name))  
-    #         # plt.close()
+            # # corner and steps plot
+            # fig, axes = plt.subplots(ndim, 1, sharex=True, figsize=(8, 20)) 
+            # for l in range(0, ndim):
+            #     axes[l].plot(sampler.chain[:, :, l].T, color="k", alpha=0.4)
+            #     axes[l].tick_params(axis=u'both', direction='in', which='both')               
+            # axes[-1].set_xlabel('step number') 
+            # plt.savefig('/Users/eilers/Dropbox/projects/RM_black_hole_masses/plots/new/corners/steps_{}_{}.pdf'.format(i, name))  
+            # plt.close()
                     
-    #         # fig = corner.corner(samples, quantiles = [0.16, 0.5, 0.84])
-    #         # plt.savefig('/Users/eilers/Dropbox/projects/RM_black_hole_masses/plots/new/corners/samples_{}.pdf'.format(name)) 
-    #         # plt.close()
+            # fig = corner.corner(samples, quantiles = [0.16, 0.5, 0.84])
+            # plt.savefig('/Users/eilers/Dropbox/projects/RM_black_hole_masses/plots/new/corners/samples_{}.pdf'.format(name)) 
+            # plt.close()
             
-    #         # only look at black hole mass!
-    #         l = 0 # black hole mass!!
-    #         good_stars = Y_mask[:, l]
-    #         Y_new_n, Y_new_var_n, k_Z_zj, factor = mean_var(Z_final, Z_opt_n, Y_input[good_stars, l], Y_var_input[good_stars, l], Ay[l], By)                
-    #         Y_new_test[n] = Y_new_n * scales[inds_label][l] + pivots[inds_label][l]
-    #         Y_new_var_test[n] = Y_new_var_n * scales[inds_label][l]**2
-    #         print('new Y!!! Y = ', Y_new_test[n], 'pm ', np.sqrt(Y_new_var_test[n]), '-- original: ', data[ind_test][n][inds_label][l])
+            # only look at black hole mass!
+            l = 0 # black hole mass!!
+            good_stars = Y_mask[:, l]
+            Y_new_n, Y_new_var_n, k_Z_zj, factor = mean_var(Z_final, Z_opt_n, Y_input[good_stars, l], Y_var_input[good_stars, l], Ay[l], By)                
+            Y_new_test[n] = Y_new_n * scales[inds_label][l] + pivots[inds_label][l]
+            Y_new_var_test[n] = Y_new_var_n * scales[inds_label][l]**2
+            print('new Y!!! Y = ', Y_new_test[n], 'pm ', np.sqrt(Y_new_var_test[n]), '-- original: ', data[ind_test][n][inds_label][l])
             
-    #         Z_new_test[n, :] = Z_opt_n
-    #         print(Z_opt_n)
+            Z_new_test[n, :] = Z_opt_n
+            print(Z_opt_n)
         
             
-    #         X_new_n, X_new_var_n, k_Z_zj = mean_var(Z_final, Z_opt_n, X_input, X_var_input, Ax, Bx, X_mask)
-    #         X_new_n = X_new_n * scales[7:] + pivots[7:]
-    #         X_new_var_n =  X_new_var_n * scales[7:]**2
+            X_new_n, X_new_var_n, k_Z_zj = mean_var(Z_final, Z_opt_n, X_input, X_var_input, Ax, Bx, X_mask)
+            X_new_n = X_new_n * scales[7:] + pivots[7:]
+            X_new_var_n =  X_new_var_n * scales[7:]**2
             
-    #         xx = X[ind_test][0] * scales[7:] + pivots[7:]
-    #         #xx_var = X_var[ind_test][0] * scales[7:]**2 / (1+beta)
-    #         ii = data_ivar[ind_test, 7:][0]
-    #         chi2_red = np.nanmean((X_new_n - xx)**2 * ii)
+            xx = X[ind_test][0] * scales[7:] + pivots[7:]
+            #xx_var = X_var[ind_test][0] * scales[7:]**2 / (1+beta)
+            ii = data_ivar[ind_test, 7:][0]
+            chi2_red = np.nanmean((X_new_n - xx)**2 * ii)
             
-    #         ax[p].plot(waves, xx, color ='k', label = r'data; $\log_{{10}}(M_\bullet/M_\odot) = {}\pm{}$'.format(round(data[ind_test][n][inds_label][l], 1), round((data_ivar[ind_test][n][inds_label][l])**(-0.5), 1)), drawstyle = 'steps')
-    #         ax[p].plot(waves, pivots[7:], color = colors[2], label = 'mean of training spectra', zorder = -100)
-    #         # add variance here!!
-    #         ax[p].set_ylim(0, 17)
-    #         ax[p].fill_between(waves, mask_prediction * 100 - 10, np.zeros_like(mask_prediction), color = colors[1], alpha = 0.2, zorder = -1000)
-    #         #ax.plot(waves[mask_prediction], X_new_n[mask_prediction], drawstyle = 'steps', label = r'spectral part used for ``z-step''')
-    #         #ax.plot(waves[~mask_prediction], X_new_n[~mask_prediction], drawstyle = 'steps', color = colors[4], label = 'predicted spectrum')
-    #         ax[p].plot(waves, X_new_n, drawstyle = 'steps', color = colors[5], label = r'predicted spectrum; $\log_{{10}}(M_\bullet/M_\odot) = {}\pm{},\,\,\chi^2={}$'.format(round(Y_new_test[n], 1), round(np.sqrt(Y_new_var_test[n]), 1), round(chi2_red, 2)))
-    #         ax[p].fill_between(waves, X_new_n-np.sqrt(X_new_var_n), X_new_n+np.sqrt(X_new_var_n), alpha = 0.3, zorder = -10, color = colors[5])
-    #         ax[p].tick_params(axis=u'both', direction='in', which='both')
-    #         ax[p].set_xlim(waves[0], waves[-1])
-    #         ax[p].legend(fontsize = 16, frameon = True)
-    # ax[4].set_xlabel(r'rest-frame wavelength [{\AA}]', fontsize = fsize)
-    # ax[2].set_xlabel(r'normalized flux', fontsize = fsize)
-    # plt.savefig('test_pred_{}_{}.pdf'.format(name, qq), bbox_inches='tight')
+            ax[p].plot(waves, xx, color ='k', label = r'data; $\log_{{10}}(M_\bullet/M_\odot) = {}\pm{}$'.format(round(data[ind_test][n][inds_label][l], 1), round((data_ivar[ind_test][n][inds_label][l])**(-0.5), 1)), drawstyle = 'steps')
+            ax[p].plot(waves, pivots[7:], color = colors[2], label = 'mean of training spectra', zorder = -100)
+            # add variance here!!
+            ax[p].set_ylim(0, 22)
+            ax[p].fill_between(waves, mask_prediction * 100 - 10, np.zeros_like(mask_prediction), color = colors[1], alpha = 0.2, zorder = -1000)
+            #ax.plot(waves[mask_prediction], X_new_n[mask_prediction], drawstyle = 'steps', label = r'spectral part used for ``z-step'')
+            #ax.plot(waves[~mask_prediction], X_new_n[~mask_prediction], drawstyle = 'steps', color = colors[4], label = 'predicted spectrum')
+            ax[p].plot(waves, X_new_n, drawstyle = 'steps', color = colors[5], label = r'predicted spectrum; $\log_{{10}}(M_\bullet/M_\odot) = {}\pm{},\,\,\chi^2={}$'.format(round(Y_new_test[n], 1), round(np.sqrt(Y_new_var_test[n]), 1), round(chi2_red, 2)))
+            ax[p].fill_between(waves, X_new_n-np.sqrt(X_new_var_n), X_new_n+np.sqrt(X_new_var_n), alpha = 0.3, zorder = -10, color = colors[5])
+            ax[p].tick_params(axis=u'both', direction='in', which='both')
+            ax[p].set_xlim(waves[0], waves[-1])
+            ax[p].legend(fontsize = 16, frameon = True)
+    ax[3].set_xlabel(r'rest-frame wavelength [{\AA}]', fontsize = fsize)
+    ax[2].set_xlabel(r'normalized flux', fontsize = fsize)
+    plt.savefig('test_pred_{}_{}.pdf'.format(name, qq), bbox_inches='tight')'''
         
         
     print('prediction for test objects...')

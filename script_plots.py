@@ -96,7 +96,7 @@ f.close()
 
 N = data.shape[0]
 D = data.shape[1]
-L = 4
+L = 3
 Q = 16
 
 lam = False
@@ -467,7 +467,7 @@ for qq in range(5):
         good_stars = Y_mask
     
         for n in range(NN):
-            zn = np.random.normal(loc=0.0, scale=0.4, size=Q)
+            zn = np.random.normal(loc=0.0, scale=0.3, size=Q)
             all_zn[n, :] = zn
             Y_new_n, Y_new_var_n, k_Z_zj, factor = mean_var(Z_final, zn, Y_input[good_stars], Y_var_input[good_stars], Ay[ll], 1.)                
             Y_new[n, ll] = Y_new_n * scales[label_l] + pivots[label_l]
@@ -487,8 +487,8 @@ for qq in range(5):
             dm = 0.2
             logmasses = np.array([42, 43, 44, 45, 46, 47])
         elif ll == 3:
-            dm = 0.05
-            logmasses = np.array([0, 0.25, 0.5, 0.75, 1.0, 1.25])
+            dm = 0.02
+            logmasses = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5]) #, 0.8])
         
         for i, mi in enumerate(logmasses):
             mask = np.abs(Y_new[:, ll] - logmasses[i]) < dm
@@ -545,12 +545,12 @@ for qq in range(5):
                    bbox_to_anchor=(.47, .4, .6, .5),
                    bbox_transform=ax.transAxes, loc=3)
         elif ll == 3:
-            dm = 0.1
-            logmasses = np.array([0.5, 0, -0.5, -1, -1.5, -2, -2.5])
+            dm = 0.02
+            logmasses = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5]) #, 0.8])
     
         for mi in range(len(logmasses)):
             if ll == 0:
-                ax.plot(waves, spectra_MBH[ll, mi+1, :], label = r'$\log_{{10}}(M_\bullet/M_\odot) = {}$'.format(int(logmasses[mi])), lw = 2, color = colors[mi+1], zorder = 10)
+                ax.plot(waves, spectra_MBH[ll, mi, :], label = r'$\log_{{10}}(M_\bullet/M_\odot) = {}$'.format(int(logmasses[mi])), lw = 2, color = colors[mi+1], zorder = 10)
                 # axb.plot(waves, spectra_MBH[ll, mi+1, :], lw = 2, color = colors[mi+1])
                 # axb.set_ylim(1.2, 3.)
                 # axb.set_xlim(1442, 1520)
@@ -565,8 +565,8 @@ for qq in range(5):
                 axb.set_xlim(1620, 1655) 
                 # axb.text(1623, 2.95, 'B', fontsize = 14)
                 axb.tick_params(axis=u'both', direction='in', which='both', labelleft = False)
-        # elif ll == 3:
-            #     ax[ll].plot(waves, spectra_MBH[ll, mi, :], label = r'$\alpha = {}$'.format(logmasses[mi]), lw = 2, color = colors[mi])
+            elif ll == 3:
+                 ax.plot(waves, spectra_MBH[ll, mi, :], label = r'$\lambda_{{\rm Edd}} = {}$'.format(logmasses[mi]), lw = 2, color = colors[mi])
         ax.legend(fontsize = 15, loc = 1)
         ax.set_ylim(0, 14.9)
         ax.set_xlim(1220, 2000)
