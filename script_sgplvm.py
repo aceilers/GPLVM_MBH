@@ -52,7 +52,7 @@ np.random.seed(42)
 #Q_start = int(sys.argv[-2])
 #Q_end = int(sys.argv[-1])
 #print(Q_start, Q_end)
-Q_start, Q_end = 26, 27
+Q_start, Q_end = 1, 27
 
 # -------------------------------------------------------------------------------
 # parameters
