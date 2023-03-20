@@ -444,7 +444,7 @@ for qq in range(5):
     
     spectra_MBH = np.zeros((L, 6, len(waves)))
     
-    for ll in range(L):
+    for ll in range(1):
     #ll = 0 # MBH
         if ll == 0:
             label_l = 0
@@ -610,7 +610,89 @@ for qq in range(5):
     # elif ll == 3:
     #     fig.savefig('/Users/eilers/Dropbox/projects/GPLVM_MBH/plots/pred_new/spectraalpha_{}_qq{}.pdf'.format(name, qq), bbox_inches = 'tight')
 
+# same plot for webpage
+'''
+fig = plt.figure(figsize = (10, 6))
+gs = gridspec.GridSpec(1, 1)
+gs.update(hspace=0.0, wspace = 0.0)
+#axb = plt.axes([0.735, 0.66, 0.15, 0.2])
 
+for ll in range(1): 
+    ax = plt.subplot(gs[ll])        
+    if ll == 0:
+        dm = 0.1
+        logmasses = np.array([6, 7, 8, 9, 10])#[::-1]
+        # axb = inset_axes(ax, width="30%", height="75%",
+        #        bbox_to_anchor=(.2, .32, .6, .5),
+        #        bbox_transform=ax.transAxes, loc=3)
+    elif ll == 2:
+        dm = 0.01
+        logmasses = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25])
+        #dm = 0.05
+        #logmasses = np.array([0, 0.25, 0.5, 0.75, 1.])
+    elif ll == 1:
+        dm = 0.2
+        logmasses = np.array([42, 43, 44, 45, 46, 47])
+        axb = inset_axes(ax, width="30%", height="75%",
+               bbox_to_anchor=(.47, .4, .6, .5),
+               bbox_transform=ax.transAxes, loc=3)
+    elif ll == 3:
+        dm = 0.02
+        logmasses = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5]) #, 0.8])
+
+    for mi in range(len(logmasses)):
+        if ll == 0:
+            ax.plot(waves, spectra_MBH[ll, mi, :], label = r'$\log_{{10}}(M_\bullet/M_\odot) = {}$'.format(int(logmasses[mi])), lw = 2, color = colors[mi+1], zorder = 10)
+            # axb.plot(waves, spectra_MBH[ll, mi+1, :], lw = 2, color = colors[mi+1])
+            # axb.set_ylim(1.2, 3.)
+            # axb.set_xlim(1442, 1520)
+            # axb.text(1445, 2.6, 'A', fontsize = 14)
+            # axb.tick_params(axis=u'both', direction='in', which='both', labelleft = False)
+        elif ll == 2:
+            ax.plot(waves, spectra_MBH[ll, mi, :], label = r'$z = {}$'.format(logmasses[mi]), lw = 2, color = colors[mi])
+        elif ll == 1:
+            ax.plot(waves, spectra_MBH[ll, mi, :], label = r'$\log_{{10}}(L_{{\rm bol}}/\rm erg\,s^{{-1}}) = {}$'.format(logmasses[mi]), lw = 2, color = colors[mi])                
+            axb.plot(waves, spectra_MBH[ll, mi, :], lw = 2, color = colors[mi])
+            axb.set_ylim(1.8, 3.2)
+            axb.set_xlim(1620, 1655) 
+            # axb.text(1623, 2.95, 'B', fontsize = 14)
+            axb.tick_params(axis=u'both', direction='in', which='both', labelleft = False)
+        elif ll == 3:
+             ax.plot(waves, spectra_MBH[ll, mi, :], label = r'$\lambda_{{\rm Edd}} = {}$'.format(logmasses[mi]), lw = 2, color = colors[mi])
+    ax.legend(fontsize = 15, loc = 1)
+    ax.set_ylim(0, 17)
+    ax.set_xlim(1220, 2000)
+    ax.axvline(civ, linestyle = '--', color = '#aeb6bf', lw = 1.5, zorder = -10) 
+    ax.text(civ-5, 15.5, r'C\,IV', fontsize = 12, rotation=90, color = '#aeb6bf', bbox=dict(boxstyle="square", fc="w", ec="w"))                    
+    ax.axvline(1639.2, linestyle = '--', color = '#aeb6bf', lw = 1.5, zorder = -10) 
+    ax.text(1639.2-5, 15.5, r'He\,II', fontsize = 12, rotation=90, color = '#aeb6bf', bbox=dict(boxstyle="square", fc="w", ec="w"))                    
+
+    ax.axvline(1239.5, linestyle = '--', color = '#aeb6bf', lw = 1.5, zorder = -10) 
+    ax.text(1239.5-5, 15, r'N\,V', fontsize = 12, rotation=90, color = '#aeb6bf', bbox=dict(boxstyle="square", fc="w", ec="w"))                    
+
+    ax.axvline(1334.0 , linestyle = '--', color = '#aeb6bf', lw = 1.5, zorder = -10) 
+    ax.text(1334.0 -5, 15.5, r'C\,II', fontsize = 12, rotation=90, color = '#aeb6bf', bbox=dict(boxstyle="square", fc="w", ec="w"))                    
+
+    ax.axvline(1302.1  , linestyle = '--', color = '#aeb6bf', lw = 1.5, zorder = -10) 
+    ax.text(1302.1  -5, 14.5, r'Si\,II+O\,I', fontsize = 12, rotation=90, color = '#aeb6bf', bbox=dict(boxstyle="square", fc="w", ec="w"))                    
+
+    ax.axvline(1401.2 , linestyle = '--', color = '#aeb6bf', lw = 1.5, zorder = -10) 
+    ax.text(1401.2 -5, 13.5, r'Si\,IV+O\,IV]', fontsize = 12, rotation=90, color = '#aeb6bf', bbox=dict(boxstyle="square", fc="w", ec="w"))                    
+
+    ax.axvline(1889.5 , linestyle = '--', color = '#aeb6bf', lw = 1.5, zorder = -10) 
+    ax.text(1889.5 -5, 3.8, r'Si\,III]', fontsize = 12, rotation=90, color = '#aeb6bf', bbox=dict(boxstyle="square", fc="w", ec="w"))                    
+
+    ax.axvline(1908.7, linestyle = '--', color = '#aeb6bf', lw = 1.5, zorder = -10)  #CIII]
+    ax.text(1908.7-5, 4, r'C\,III]', fontsize = 12, rotation=90, color = '#aeb6bf', bbox=dict(boxstyle="square", fc="w", ec="w"))                    
+    if ll == 2:
+        ax.tick_params(axis=u'both', direction='in', which='both')
+        ax.set_xlabel('rest-frame wavelength [{\AA}]', fontsize = fsize)
+    else:
+        ax.tick_params(axis=u'both', direction='in', which='both', labelbottom = False, labelleft = False)            
+    if ll == 1:
+        ax.set_ylabel('normalized flux', fontsize = fsize)
+    fig.savefig('/Users/eilers/Dropbox/webpage/webpage_MIT_new/gplvm.png', dpi = 400, bbox_inches = 'tight')
+    '''
 # -------------------------------------------------------------------------------'''
 # averaging predictions
 # ------------------------------------------------------------------------------- 
