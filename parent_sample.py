@@ -360,6 +360,47 @@ for i, q in enumerate(qsos.keys()):
 # for i, q in enumerate(qsos.keys()):
 #     print(qsos[q].name, qsos[q].logVP_Woo15, qsos[q].logVP, qsos[q].MBH)
 
+# -------------------------------------------------------------------------------
+# print table
+# -------------------------------------------------------------------------------
+
+# from astropy.io import ascii
+
+# tab = Table()
+# names = []
+# mbh = []
+# mbh_err = []
+# fwhm_civ = []
+# fwhm_civ_err = []
+# l1350 = []
+# l1350_err = []
+# for i, q in enumerate(qsos.keys()):
+#     names.append(qsos[q].name)
+#     mbh.append(qsos[q].MBH)
+#     mbh_err.append(qsos[q].MBH_err)
+#     fwhm_civ.append(qsos[q].fwhm_CIV)
+#     fwhm_civ_err.append(qsos[q].fwhm_CIV_err)
+#     l1350.append(qsos[q].L1350)
+#     l1350_err.append(qsos[q].L1350_err)
+    
+# names = Column(names)
+# mbh = Column(mbh)
+# mbh_err = Column(mbh_err)
+# fwhm_civ = Column(fwhm_civ)
+# fwhm_civ_err = Column(fwhm_civ_err)
+# l1350 = Column(l1350)
+# l1350_err = Column(l1350_err)
+
+# tab.add_column(names, name = 'name')
+# tab.add_column(mbh, name = 'mbh')
+# tab.add_column(mbh_err, name = 'mbh_err')
+# tab.add_column(fwhm_civ, name = 'fwhm_civ')
+# tab.add_column(fwhm_civ_err, name = 'fwhm_civ_err')
+# tab.add_column(l1350, name = 'l1350')
+# tab.add_column(l1350_err, name = 'l1350_err')
+
+# ascii.write(tab, 'P17_test.txt', delimiter = '\t')
+
     
 # -------------------------------------------------------------------------------
 # wavelength grid
