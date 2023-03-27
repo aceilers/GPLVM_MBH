@@ -62,7 +62,7 @@ for qq in range(data.shape[0]):
 # load data slightly larger data set with 1000 objects
 # -------------------------------------------------------------------------------
      
-hdu = fits.open('data_norm_sdss16_1000.fits')  
+hdu = fits.open('/Users/eilers/Dropbox/projects/GPLVM_MBH/SDSS/data_norm_sdss16_1000.fits')  
 issues = hdu[4].data
 wave = hdu[0].data  
 X = hdu[1].data[issues == 0.]
@@ -77,14 +77,17 @@ X[masks == 0.] = np.nan
 X = X[:1000, :]
 Y = Y[:1000, :]
 
-qs = np.nanpercentile(X, (2.5, 50, 97.5), axis=0)
-pivots = qs[1]
-scales = (qs[2] - qs[0]) / 4.
-scales[scales == 0] = 1.
-X = (X - pivots) / scales
 
-qs = np.nanpercentile(Y, (2.5, 50, 97.5), axis=0)
-pivots = qs[1]
-scales = (qs[2] - qs[0]) / 4.
-scales[scales == 0] = 1.
-Y = (Y - pivots) / scales
+means_X = np.nanmean(X, axis = 0)
+means_Y = np.nanmean(Y, axis = 0)
+std_X = np.nanstd(X, axis = 0)
+std_Y = np.nanstd(Y, axis = 0)
+
+X = (X - means_X) / std_X
+Y = (Y - means_Y) / std_Y
+
+X_pred = X_pred * std_X + means_X
+Y_pred = Y_pred * std_Y + means_Y
+
+
+
