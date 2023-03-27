@@ -10,7 +10,7 @@ import pickle
 import numpy as np
 
 # -------------------------------------------------------------------------------
-# load data
+# load tiny data set with 31 objects
 # -------------------------------------------------------------------------------
 
 f = open('../RM_black_hole_masses/data_HST_1220_5000_2A.pickle', 'rb') 
@@ -55,3 +55,36 @@ for qq in range(data.shape[0]):
     inds_label[6] = True # Lbol
     Y = data_scaled[:, inds_label] 
     Y_var = (1 / data_ivar_scaled[:, inds_label])
+    
+    
+    
+# -------------------------------------------------------------------------------
+# load data slightly larger data set with 1000 objects
+# -------------------------------------------------------------------------------
+     
+hdu = fits.open('data_norm_sdss16_1000.fits')  
+issues = hdu[4].data
+wave = hdu[0].data  
+X = hdu[1].data[issues == 0.]
+# X_ivar = hdu[2].data[issues == 0.]
+masks = hdu[3].data[issues == 0.]
+Y = hdu[5].data[issues == 0.]
+
+# set missing values to NaN
+X[masks == 0.] = np.nan
+
+# full data set will have 23085 quasars (or ~80000), only 1000 now
+X = X[:1000, :]
+Y = Y[:1000, :]
+
+qs = np.nanpercentile(X, (2.5, 50, 97.5), axis=0)
+pivots = qs[1]
+scales = (qs[2] - qs[0]) / 4.
+scales[scales == 0] = 1.
+X = (X - pivots) / scales
+
+qs = np.nanpercentile(Y, (2.5, 50, 97.5), axis=0)
+pivots = qs[1]
+scales = (qs[2] - qs[0]) / 4.
+scales[scales == 0] = 1.
+Y = (Y - pivots) / scales
