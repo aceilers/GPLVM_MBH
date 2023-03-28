@@ -62,13 +62,15 @@ for qq in range(data.shape[0]):
 # load data slightly larger data set with 1000 objects
 # -------------------------------------------------------------------------------
      
-hdu = fits.open('/Users/eilers/Dropbox/projects/GPLVM_MBH/SDSS/data_norm_sdss16_1000.fits')  
+hdu = fits.open('/Users/eilers/Dropbox/projects/GPLVM_MBH/SDSS/data_norm_sdss16_SNR5_1.fits')  
 issues = hdu[4].data
 wave = hdu[0].data  
 X = hdu[1].data[issues == 0.]
-# X_ivar = hdu[2].data[issues == 0.]
+X_ivar = hdu[2].data[issues == 0.]
 masks = hdu[3].data[issues == 0.]
 Y = hdu[5].data[issues == 0.]
+Y_ivar = hdu[6].data[issues == 0.]
+snr = hdu[7].data[issues == 0.]
 
 # set missing values to NaN
 X[masks == 0.] = np.nan
