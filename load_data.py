@@ -62,7 +62,7 @@ for qq in range(data.shape[0]):
 # load data slightly larger data set with 1000 objects
 # -------------------------------------------------------------------------------
      
-hdu = fits.open('/Users/eilers/Dropbox/projects/GPLVM_MBH/SDSS/data_norm_sdss16_SNR5_1.fits')  
+hdu = fits.open('/Users/eilers/Dropbox/projects/GPLVM_MBH/SDSS/data_norm_sdss16_SNR5_1000.fits')  
 issues = hdu[4].data
 wave = hdu[0].data  
 X = hdu[1].data[issues == 0.]
