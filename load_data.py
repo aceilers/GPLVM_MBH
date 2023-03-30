@@ -62,7 +62,7 @@ for qq in range(data.shape[0]):
 # load data slightly larger data set with 1000 objects
 # -------------------------------------------------------------------------------
      
-hdu = fits.open('/Users/eilers/Dropbox/projects/GPLVM_MBH/SDSS/data_norm_sdss16_SNR5_1000.fits')  
+hdu = fits.open('/Users/eilers/Dropbox/projects/GPLVM_MBH/SDSS/data_norm_sdss16_SNR5_1.fits')  
 issues = hdu[4].data
 wave = hdu[0].data  
 X = hdu[1].data[issues == 0.]
@@ -75,9 +75,13 @@ snr = hdu[7].data[issues == 0.]
 # set missing values to NaN
 X[masks == 0.] = np.nan
 
+# mask dimensions with no data
+mask_d = np.sum(np.isfinite(X), axis = 0) > 0
+X = X[:, mask_d]
+
 # full data set will have 23085 quasars (or ~80000), only 1000 now
-X = X[:1000, :]
-Y = Y[:1000, :]
+X = X[:10000, :]
+Y = Y[:10000, :]
 
 
 means_X = np.nanmean(X, axis = 0)
